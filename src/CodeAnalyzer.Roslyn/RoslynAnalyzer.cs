@@ -14,6 +14,7 @@ namespace CodeAnalyzer.Roslyn;
 public class RoslynAnalyzer
 {
     private readonly IVectorStoreWriter? _vectorStore;
+    private readonly AnalyzerOptions _options = new();
     /// <summary>
     /// Creates a new instance of RoslynAnalyzer
     /// </summary>
@@ -27,6 +28,17 @@ public class RoslynAnalyzer
     public RoslynAnalyzer(IVectorStoreWriter vectorStore)
     {
         _vectorStore = vectorStore;
+    }
+
+    public RoslynAnalyzer WithOptions(AnalyzerOptions options)
+    {
+        if (options != null)
+        {
+            _options.IncludeWarningsInErrors = options.IncludeWarningsInErrors;
+            _options.RecordExternalCalls = options.RecordExternalCalls;
+            _options.AttributeInitializerCalls = options.AttributeInitializerCalls;
+        }
+        return this;
     }
 
     /// <summary>
@@ -53,9 +65,10 @@ public class RoslynAnalyzer
 
             // Collect diagnostics (non-fatal)
             var diagnostics = compilation.GetDiagnostics();
-            foreach (var d in diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error))
+            foreach (var d in diagnostics)
             {
-                result.Errors.Add(d.ToString());
+                if (d.Severity == DiagnosticSeverity.Error || (_options.IncludeWarningsInErrors && d.Severity == DiagnosticSeverity.Warning))
+                    result.Errors.Add(d.ToString());
             }
 
             foreach (var tree in compilation.SyntaxTrees)
@@ -121,6 +134,14 @@ public class RoslynAnalyzer
 
             var calls = ExtractMethodCalls(tree, model);
             result.MethodCalls.AddRange(calls);
+
+            // Collect file-specific diagnostics if requested in file mode
+            var diags = model.Compilation.GetDiagnostics();
+            foreach (var d in diags)
+            {
+                if (d.Severity == DiagnosticSeverity.Error || (_options.IncludeWarningsInErrors && d.Severity == DiagnosticSeverity.Warning))
+                    result.Errors.Add(d.ToString());
+            }
 
             if (_vectorStore != null && calls.Count > 0)
             {

@@ -24,6 +24,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="TestData\Errors\SyntaxError.cs" />
+    <None Include="TestData\Errors\SyntaxError.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\CodeAnalyzer.Roslyn\CodeAnalyzer.Roslyn.csproj" />
   </ItemGroup>
 
