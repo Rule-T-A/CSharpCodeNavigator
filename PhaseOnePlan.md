@@ -180,12 +180,12 @@
   - [x] Two classes in different files
   - [x] Methods calling across files
   - [x] Interface implementations
-  - [ ] Inheritance scenarios (deferred to 1.7 edge cases if needed)
+  - [x] Inheritance scenarios (override, abstract base, interface, explicit interface, base vs this)
 
 - [x] Write tests:
   - [x] Test cross-file method resolution
   - [x] Test interface method calls
-  - [ ] Test inherited method calls (deferred)
+  - [x] Test inherited method calls
   - [x] Test unresolved symbol handling (skipped entries, no crash)
 
 - [x] Verify semantic analysis works across files

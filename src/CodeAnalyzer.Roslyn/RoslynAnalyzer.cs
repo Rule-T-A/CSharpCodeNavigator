@@ -313,6 +313,9 @@ public class RoslynAnalyzer
                 calleeSymbol = reduced;
             }
 
+            // Normalize inheritance/interface dispatch targets per 1.5
+            calleeSymbol = NormalizeCalleeSymbol(calleeSymbol);
+
             var location = invocation.GetLocation().GetLineSpan();
 
             var call = new MethodCallInfo
@@ -341,6 +344,29 @@ public class RoslynAnalyzer
         var methodDecl = node.AncestorsAndSelf().OfType<MethodDeclarationSyntax>().FirstOrDefault();
         if (methodDecl == null) return null;
         return model.GetDeclaredSymbol(methodDecl) as IMethodSymbol;
+    }
+
+    private IMethodSymbol NormalizeCalleeSymbol(IMethodSymbol callee)
+    {
+        // Explicit interface implementation: map to the interface method
+        if (callee.ExplicitInterfaceImplementations != null && callee.ExplicitInterfaceImplementations.Length > 0)
+        {
+            return callee.ExplicitInterfaceImplementations[0];
+        }
+
+        // Interface calls: already an interface symbol; keep as-is
+        if (callee.ContainingType?.TypeKind == TypeKind.Interface)
+        {
+            return callee;
+        }
+
+        // Overrides/virtual: normalize to the top-most overridden base method
+        var current = callee;
+        while (current.OverriddenMethod != null)
+        {
+            current = current.OverriddenMethod;
+        }
+        return current;
     }
 
     private async Task StoreMethodCallAsync(MethodCallInfo call)

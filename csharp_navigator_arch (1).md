@@ -458,6 +458,18 @@ I handle this case?
 
 ---
 
+### Dispatch Normalization Policy (Step 1.5)
+
+To ensure stable, deduplicated relationships for path finding and indexing, the analyzer normalizes the callee symbol as follows:
+
+- Overrides/virtual/abstract: Walk `IMethodSymbol.OverriddenMethod` to the base declaration; record calls against that base method.
+- Interface calls: If the target is an interface method, keep the interface method symbol.
+- Explicit interface implementations: Map concrete implementation to the corresponding interface method via `ExplicitInterfaceImplementations`.
+- Extension methods: Normalize to the defining static method using `ReducedFrom` before applying the rules above.
+- `base.Foo()` vs `this.Foo()`: Both are recorded on the base method symbol for consistency.
+
+Rationale: Using canonical targets prevents duplicate edges for the same logical relationship and keeps call graphs stable across concrete implementations.
+
 ## Phase 2: Call Index Builder
 
 **Owner**: Katie
