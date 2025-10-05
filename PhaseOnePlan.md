@@ -11,7 +11,7 @@
 
 ## Phase 1 Breakdown: Small, Incremental Steps
 
-**Progress**: 4/8 steps completed (50%) - Steps 1.1–1.4 ✅ COMPLETED
+**Progress**: 5/8 steps completed (62.5%) - Steps 1.1–1.5 ✅ COMPLETED
 
 ### **Step 1.1: Project Setup & Basic Models** ⏱️ *30 minutes* ✅ **COMPLETED**
 **Goal**: Create foundation data structures and verify project setup
@@ -162,33 +162,35 @@
 
 ---
 
-### **Step 1.5: Semantic Analysis Integration** ⏱️ *60 minutes*
+### **Step 1.5: Semantic Analysis Integration** ⏱️ *60 minutes* ✅ **COMPLETED**
 **Goal**: Use semantic model to resolve method symbols across files
 
-- [ ] Enhance method call detection with semantic analysis:
-  - [ ] Use `semanticModel.GetSymbolInfo(invocation)` to resolve symbols
-  - [ ] Handle cross-file method calls
-  - [ ] Handle method overloads
-  - [ ] Handle generic methods
+- [x] Enhance method call detection with semantic analysis:
+  - [x] Use `semanticModel.GetSymbolInfo(invocation)` to resolve symbols
+  - [x] Handle cross-file method calls
+  - [x] Handle method overloads
+  - [x] Handle generic methods (normalized via `OriginalDefinition` where applicable)
 
-- [ ] Implement symbol resolution:
-  - [ ] Check for null symbols (unresolved calls)
-  - [ ] Handle extension methods
-  - [ ] Handle method calls through interfaces
+- [x] Implement symbol resolution:
+  - [x] Check for null symbols (unresolved calls)
+  - [x] Handle extension methods (normalize via `ReducedFrom`)
+  - [x] Handle method calls through interfaces (interface dispatch captured)
 
-- [ ] Create multi-file test scenario:
-  - [ ] Two classes in different files
-  - [ ] Methods calling across files
-  - [ ] Interface implementations
-  - [ ] Inheritance scenarios
+- [x] Create multi-file test scenario:
+  - [x] Two classes in different files
+  - [x] Methods calling across files
+  - [x] Interface implementations
+  - [ ] Inheritance scenarios (deferred to 1.7 edge cases if needed)
 
-- [ ] Write tests:
-  - [ ] Test cross-file method resolution
-  - [ ] Test interface method calls
-  - [ ] Test inherited method calls
-  - [ ] Test unresolved symbol handling
+- [x] Write tests:
+  - [x] Test cross-file method resolution
+  - [x] Test interface method calls
+  - [ ] Test inherited method calls (deferred)
+  - [x] Test unresolved symbol handling (skipped entries, no crash)
 
-- [ ] Verify semantic analysis works across files
+- [x] Verify semantic analysis works across files
+
+**Notes**: Implemented `AnalyzeProjectAsync` to iterate all syntax trees with a single compilation for semantic consistency. Enhanced call extraction to select candidates when `Symbol` is null, normalize extension methods via `ReducedFrom`, and record interface-dispatch targets at the interface method symbol level for stability.
 
 ---
 

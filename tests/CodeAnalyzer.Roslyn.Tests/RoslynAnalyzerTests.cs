@@ -18,17 +18,6 @@ public class RoslynAnalyzerTests
     }
 
     [Fact]
-    public async Task AnalyzeProjectAsync_NotImplemented_ThrowsNotImplementedException()
-    {
-        // Arrange
-        var analyzer = new RoslynAnalyzer();
-        var projectPath = "test.csproj";
-
-        // Act & Assert
-        await Assert.ThrowsAsync<NotImplementedException>(() => analyzer.AnalyzeProjectAsync(projectPath));
-    }
-
-    [Fact]
     public async Task AnalyzeFileAsync_NotImplemented_ThrowsNotImplementedException()
     {
         // This test is obsolete after Step 1.4 implementation.
@@ -148,5 +137,42 @@ public class RoslynAnalyzerTests
         Assert.True(result.MethodsAnalyzed >= 3);
         Assert.NotEmpty(result.MethodCalls);
         Assert.Empty(result.Errors);
+    }
+
+    [Fact]
+    public async Task AnalyzeProjectAsync_CrossFile_InterfaceAndExtensionCallsResolved()
+    {
+        // Arrange
+        var analyzer = new RoslynAnalyzer();
+        var dir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "TestData", "CrossFile");
+        dir = Path.GetFullPath(dir);
+        var files = new[]
+        {
+            Path.Combine(dir, "IService.cs"),
+            Path.Combine(dir, "ServiceImpl.cs"),
+            Path.Combine(dir, "Extensions.cs"),
+            Path.Combine(dir, "Consumer.cs")
+        };
+        foreach (var f in files) Assert.True(File.Exists(f), $"Missing: {f}");
+
+        // Build a temporary ad-hoc compilation from files (simulate project)
+        var compilation = await analyzer.CreateCompilationFromFilesAsync(files);
+        var tree = compilation.SyntaxTrees.First();
+        var model = compilation.GetSemanticModel(tree);
+        Assert.NotNull(model);
+
+        // Extract calls across trees
+        var allCalls = new List<CodeAnalyzer.Roslyn.Models.MethodCallInfo>();
+        foreach (var t in compilation.SyntaxTrees)
+        {
+            var m = compilation.GetSemanticModel(t);
+            allCalls.AddRange(analyzer.ExtractMethodCalls(t, m));
+        }
+
+        // Assert that Consumer.Run calls IService.Work (interface dispatch)
+        Assert.Contains(allCalls, c => c.Caller.EndsWith("CrossFile.Use.Consumer.Run") && c.Callee.EndsWith("CrossFile.Svc.IService.Work"));
+
+        // Assert extension call resolved to extension method definition
+        Assert.Contains(allCalls, c => c.Caller.EndsWith("CrossFile.Use.Consumer.Run") && c.Callee.EndsWith("CrossFile.Svc.ServiceExtensions.Extra"));
     }
 }

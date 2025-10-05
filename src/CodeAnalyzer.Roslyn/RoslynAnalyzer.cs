@@ -27,9 +27,45 @@ public class RoslynAnalyzer
     /// <returns>AnalysisResult containing all discovered method calls and metadata</returns>
     public async Task<AnalysisResult> AnalyzeProjectAsync(string projectPath)
     {
-        // TODO: Implement project analysis
-        // This will be implemented in Step 1.2
-        throw new NotImplementedException("Project analysis not yet implemented");
+        if (string.IsNullOrWhiteSpace(projectPath))
+            throw new ArgumentException("Project path is required", nameof(projectPath));
+
+        var result = new AnalysisResult
+        {
+            FilesProcessed = 0,
+            MethodsAnalyzed = 0,
+            MethodCalls = new List<MethodCallInfo>(),
+            Errors = new List<string>()
+        };
+
+        try
+        {
+            var compilation = await CreateCompilationAsync(projectPath).ConfigureAwait(false);
+
+            // Collect diagnostics (non-fatal)
+            var diagnostics = compilation.GetDiagnostics();
+            foreach (var d in diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error))
+            {
+                result.Errors.Add(d.ToString());
+            }
+
+            foreach (var tree in compilation.SyntaxTrees)
+            {
+                var model = compilation.GetSemanticModel(tree);
+                var methods = ExtractMethodDeclarations(tree, model);
+                result.MethodsAnalyzed += methods.Count;
+
+                var calls = ExtractMethodCalls(tree, model);
+                result.MethodCalls.AddRange(calls);
+                result.FilesProcessed += 1;
+            }
+        }
+        catch (Exception ex)
+        {
+            result.Errors.Add(ex.Message);
+        }
+
+        return result;
     }
 
     /// <summary>
@@ -203,8 +239,19 @@ public class RoslynAnalyzer
                 continue; // skip invocations outside methods
 
             var symbolInfo = model.GetSymbolInfo(invocation);
-            if (symbolInfo.Symbol is not IMethodSymbol calleeSymbol)
-                continue; // unresolved; handled in Step 1.5
+            IMethodSymbol? calleeSymbol = symbolInfo.Symbol as IMethodSymbol;
+            if (calleeSymbol == null && symbolInfo.CandidateSymbols.Length > 0)
+            {
+                calleeSymbol = symbolInfo.CandidateSymbols.OfType<IMethodSymbol>().FirstOrDefault();
+            }
+            if (calleeSymbol == null)
+                continue; // unresolved; skip
+
+            // Normalize extension method to the defining static method
+            if (calleeSymbol.ReducedFrom is IMethodSymbol reduced)
+            {
+                calleeSymbol = reduced;
+            }
 
             var location = invocation.GetLocation().GetLineSpan();
 
