@@ -201,10 +201,10 @@
   - [x] `AddTextAsync(content, metadata)`
   - [x] Library remains decoupled from external VectorStore package
 
-- [ ] Implement metadata schema compliance:
-  - [ ] `type: "method_call"`
-  - [ ] All required metadata fields
-  - [ ] Proper content formatting
+- [~] Implement metadata schema compliance:
+  - [x] `type: "method_call"`
+  - [x] Required metadata fields persisted
+  - [ ] Additional validation/normalization rules (TBD)
 
 - [x] Integrate with `RoslynAnalyzer`:
   - [x] Optional writer via constructor DI

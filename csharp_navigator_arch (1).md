@@ -14,9 +14,9 @@ This document describes the architecture and implementation plan for a C# code n
 ### Technology Stack
 
 - **Analysis**: Roslyn (C# compiler platform) for semantic code analysis
-- **Storage**: CSharpSimpleVector for embedding-based storage and search
+- **Storage**: VectorStore (file-based vector database) for embedding-based storage and search
 - **Integration**: MCP (Model Context Protocol) server for Claude Desktop
-- **Language**: C# / .NET 8
+- **Language**: C# / .NET 9
 
 ---
 
@@ -1426,7 +1426,7 @@ CSharpCodeNavigator/
 │   │   └── Models/
 │   │       └── MethodMetadata.cs
 │   │
-│   ├── CodeAnalyzer.Diagrams/            # Phase 5
+│   ├── CodeAnalyzer.Diagrams/            # Phase 5 (planned)
 │   │   ├── CodeAnalyzer.Diagrams.csproj
 │   │   └── MermaidGenerator.cs
 │   │
@@ -1435,7 +1435,7 @@ CSharpCodeNavigator/
 │   │   ├── Program.cs
 │   │   └── CommandHandler.cs
 │   │
-│   ├── CodeAnalyzer.McpServer/           # Phase 6
+│   ├── CodeAnalyzer.McpServer/           # Phase 6 (planned)
 │   │   ├── CodeAnalyzer.McpServer.csproj
 │   │   ├── Program.cs
 │   │   ├── McpProtocol.cs
@@ -1448,7 +1448,7 @@ CSharpCodeNavigator/
 │   │       ├── DiagramHandlers.cs
 │   │       └── IndexProjectHandler.cs
 │   │
-│   └── CodeAnalyzer.IndexingUI/          # UI for triggering analysis
+│   └── CodeAnalyzer.IndexingUI/          # UI for triggering analysis (planned)
 │       ├── CodeAnalyzer.IndexingUI.csproj
 │       ├── Program.cs
 │       └── MainWindow.xaml (or Console UI)
@@ -1468,6 +1468,8 @@ CSharpCodeNavigator/
     ├── sample-csharp-project/
     └── claude-desktop-config.json
 ```
+
+Note: Projects marked as “planned” are not yet present in this repository.
 
 ---
 

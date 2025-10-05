@@ -1,5 +1,7 @@
 # VectorStore
 
+Note: This document describes the external `VectorStore` package consumed by this repository. The package is referenced via NuGet/`.nupkg`; the source layout and tests referenced below live in the VectorStore project, not in this repository.
+
 A high-performance, file-based vector storage and similarity search library for .NET with local Nomic embedding generation and intelligent document processing.
 
 ## Features

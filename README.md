@@ -1,6 +1,6 @@
 # C# Code Navigator - Proof of Concept
 
-A proof of concept implementation of phases 1-4 of the C# Code Navigator system for AI-powered code exploration through Claude Desktop.
+A proof of concept scaffolding with Phase 1 mostly implemented; Phases 2–4 are planned for AI-powered code exploration through Claude Desktop.
 
 ## 🎯 Project Goals
 
@@ -42,6 +42,8 @@ CSharpCodeNavigator/
 - **Microsoft.Build.Locator**: MSBuild integration for project loading
 - **xUnit**: Testing framework
 
+Requires .NET 9 SDK.
+
 ## Getting Started
 
 1. **Restore packages**:
@@ -63,10 +65,11 @@ CSharpCodeNavigator/
    ```bash
    dotnet run --project src/CodeAnalyzer.Console
    ```
+   Note: The console app is a placeholder; interactive commands will be added in Phase 4.
 
 ## Phase Implementation Status
 
-- [ ] **Phase 1**: Roslyn Analysis & Indexing Pipeline (Steps 1.1–1.7 complete)
+- [x] **Phase 1**: Roslyn Analysis & Indexing Pipeline (Steps 1.1–1.7 complete; 1.8 pending)
 - [ ] **Phase 2**: Call Index Builder  
 - [ ] **Phase 3**: Path Finding Algorithms
 - [ ] **Phase 4**: Console Interface
