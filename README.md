@@ -66,7 +66,7 @@ CSharpCodeNavigator/
 
 ## Phase Implementation Status
 
-- [ ] **Phase 1**: Roslyn Analysis & Indexing Pipeline (Steps 1.1–1.3 complete)
+- [ ] **Phase 1**: Roslyn Analysis & Indexing Pipeline (Steps 1.1–1.4 complete)
 - [ ] **Phase 2**: Call Index Builder  
 - [ ] **Phase 3**: Path Finding Algorithms
 - [ ] **Phase 4**: Console Interface

@@ -11,7 +11,7 @@
 
 ## Phase 1 Breakdown: Small, Incremental Steps
 
-**Progress**: 3/8 steps completed (37.5%) - Steps 1.1–1.3 ✅ COMPLETED
+**Progress**: 4/8 steps completed (50%) - Steps 1.1–1.4 ✅ COMPLETED
 
 ### **Step 1.1: Project Setup & Basic Models** ⏱️ *30 minutes* ✅ **COMPLETED**
 **Goal**: Create foundation data structures and verify project setup
@@ -131,32 +131,34 @@
 
 ---
 
-### **Step 1.4: Method Call Detection (Basic)** ⏱️ *45 minutes*
+### **Step 1.4: Method Call Detection (Basic)** ⏱️ *45 minutes* ✅ **COMPLETED**
 **Goal**: Find method invocations and extract caller/callee relationships
 
-- [ ] Implement basic method call detection:
-  - [ ] `ExtractMethodCalls(SyntaxTree tree, SemanticModel model)` method
-  - [ ] Find all `InvocationExpressionSyntax` nodes
-  - [ ] Get containing method (caller)
-  - [ ] Get called method symbol (callee)
+- [x] Implement basic method call detection:
+  - [x] `ExtractMethodCalls(SyntaxTree tree, SemanticModel model)` method
+  - [x] Find all `InvocationExpressionSyntax` nodes
+  - [x] Get containing method (caller)
+  - [x] Get called method symbol (callee)
 
-- [ ] Handle basic cases:
-  - [ ] Direct method calls (`obj.Method()`)
-  - [ ] Static method calls (`Class.Method()`)
-  - [ ] Method calls within same class
+- [x] Handle basic cases:
+  - [x] Direct method calls (`obj.Method()`)
+  - [x] Static method calls (`Class.Method()`)
+  - [x] Method calls within same class
 
-- [ ] Create test C# file with method calls:
-  - [ ] Class with methods that call each other
-  - [ ] Mix of instance and static calls
-  - [ ] Calls to external methods (Console.WriteLine)
+- [x] Create test C# file with method calls:
+  - [x] Class with methods that call each other
+  - [x] Mix of instance and static calls
+  - [x] Calls to external methods (Console.WriteLine)
 
-- [ ] Write tests:
-  - [ ] Test method call extraction
-  - [ ] Test caller/callee identification
-  - [ ] Test line number extraction
-  - [ ] Verify call relationships are correct
+- [x] Write tests:
+  - [x] Test method call extraction
+  - [x] Test caller/callee identification
+  - [x] Test line number extraction
+  - [x] Verify call relationships are correct
 
-- [ ] Verify basic method call detection works
+- [x] Verify basic method call detection works
+
+**Notes**: Implemented `GetContainingMethodSymbol` for robust caller resolution; `AnalyzeFileAsync` now returns `AnalysisResult` with methods analyzed and call list. Unresolved symbols are skipped here and will be addressed in Step 1.5.
 
 ---
 

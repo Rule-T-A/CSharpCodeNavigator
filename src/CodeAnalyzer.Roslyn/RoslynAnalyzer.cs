@@ -39,9 +39,35 @@ public class RoslynAnalyzer
     /// <returns>AnalysisResult containing method calls found in the file</returns>
     public async Task<AnalysisResult> AnalyzeFileAsync(string filePath)
     {
-        // TODO: Implement single file analysis
-        // This will be implemented in Step 1.2
-        throw new NotImplementedException("File analysis not yet implemented");
+        if (string.IsNullOrWhiteSpace(filePath))
+            throw new ArgumentException("File path is required", nameof(filePath));
+
+        var compilation = await CreateCompilationFromFilesAsync(filePath).ConfigureAwait(false);
+        var tree = compilation.SyntaxTrees.First();
+        var model = compilation.GetSemanticModel(tree);
+
+        var result = new AnalysisResult
+        {
+            FilesProcessed = 1,
+            MethodsAnalyzed = 0,
+            MethodCalls = new List<MethodCallInfo>(),
+            Errors = new List<string>()
+        };
+
+        try
+        {
+            var methods = ExtractMethodDeclarations(tree, model);
+            result.MethodsAnalyzed = methods.Count;
+
+            var calls = ExtractMethodCalls(tree, model);
+            result.MethodCalls.AddRange(calls);
+        }
+        catch (Exception ex)
+        {
+            result.Errors.Add(ex.Message);
+        }
+
+        return result;
     }
 
     /// <summary>
@@ -157,5 +183,56 @@ public class RoslynAnalyzer
             parts.Insert(0, ns.ToDisplayString());
 
         return string.Join('.', parts);
+    }
+
+    /// <summary>
+    /// Extract method call relationships from a syntax tree using the provided semantic model.
+    /// </summary>
+    public List<MethodCallInfo> ExtractMethodCalls(SyntaxTree tree, SemanticModel model)
+    {
+        if (tree == null) throw new ArgumentNullException(nameof(tree));
+        if (model == null) throw new ArgumentNullException(nameof(model));
+
+        var root = tree.GetRoot();
+        var results = new List<MethodCallInfo>();
+
+        foreach (var invocation in root.DescendantNodes().OfType<InvocationExpressionSyntax>())
+        {
+            var callerSymbol = GetContainingMethodSymbol(model, invocation);
+            if (callerSymbol == null)
+                continue; // skip invocations outside methods
+
+            var symbolInfo = model.GetSymbolInfo(invocation);
+            if (symbolInfo.Symbol is not IMethodSymbol calleeSymbol)
+                continue; // unresolved; handled in Step 1.5
+
+            var location = invocation.GetLocation().GetLineSpan();
+
+            var call = new MethodCallInfo
+            {
+                Caller = GetFullyQualifiedName(callerSymbol),
+                Callee = GetFullyQualifiedName(calleeSymbol),
+                CallerClass = callerSymbol.ContainingType?.Name ?? string.Empty,
+                CalleeClass = calleeSymbol.ContainingType?.Name ?? string.Empty,
+                CallerNamespace = callerSymbol.ContainingNamespace?.ToDisplayString() ?? string.Empty,
+                CalleeNamespace = calleeSymbol.ContainingNamespace?.ToDisplayString() ?? string.Empty,
+                FilePath = location.Path,
+                LineNumber = location.StartLinePosition.Line + 1
+            };
+
+            results.Add(call);
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Find the IMethodSymbol that contains the given syntax node.
+    /// </summary>
+    public IMethodSymbol? GetContainingMethodSymbol(SemanticModel model, SyntaxNode node)
+    {
+        var methodDecl = node.AncestorsAndSelf().OfType<MethodDeclarationSyntax>().FirstOrDefault();
+        if (methodDecl == null) return null;
+        return model.GetDeclaredSymbol(methodDecl) as IMethodSymbol;
     }
 }
