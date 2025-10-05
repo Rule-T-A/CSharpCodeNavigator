@@ -3,6 +3,7 @@ using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.MSBuild;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace CodeAnalyzer.Roslyn;
 
@@ -106,5 +107,55 @@ public class RoslynAnalyzer
         );
 
         return compilation;
+    }
+
+    /// <summary>
+    /// Extract fully qualified method names declared in the given syntax tree.
+    /// </summary>
+    /// <param name="tree">Syntax tree to scan</param>
+    /// <param name="model">Semantic model associated with the tree</param>
+    /// <returns>List of fully qualified method names</returns>
+    public List<string> ExtractMethodDeclarations(SyntaxTree tree, SemanticModel model)
+    {
+        if (tree == null) throw new ArgumentNullException(nameof(tree));
+        if (model == null) throw new ArgumentNullException(nameof(model));
+
+        var root = tree.GetRoot();
+        var results = new List<string>();
+
+        foreach (var methodDecl in root.DescendantNodes().OfType<MethodDeclarationSyntax>())
+        {
+            var symbol = model.GetDeclaredSymbol(methodDecl);
+            if (symbol == null)
+                continue;
+
+            var fqn = GetFullyQualifiedName(symbol);
+            if (!string.IsNullOrWhiteSpace(fqn))
+                results.Add(fqn);
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Generate fully qualified name for a symbol as Namespace.Class.Method
+    /// </summary>
+    /// <param name="symbol">Symbol to format</param>
+    /// <returns>Fully qualified name</returns>
+    public string GetFullyQualifiedName(ISymbol symbol)
+    {
+        if (symbol == null) return string.Empty;
+
+        var parts = new List<string>();
+        parts.Add(symbol.Name);
+
+        if (symbol.ContainingType != null)
+            parts.Insert(0, symbol.ContainingType.Name);
+
+        var ns = symbol.ContainingNamespace;
+        if (ns != null && !ns.IsGlobalNamespace)
+            parts.Insert(0, ns.ToDisplayString());
+
+        return string.Join('.', parts);
     }
 }

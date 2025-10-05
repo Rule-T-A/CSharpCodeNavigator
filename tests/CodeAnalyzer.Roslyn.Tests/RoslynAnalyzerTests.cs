@@ -68,4 +68,29 @@ public class RoslynAnalyzerTests
         var diagnostics = compilation.GetDiagnostics();
         Assert.DoesNotContain(diagnostics, d => d.Severity == DiagnosticSeverity.Error);
     }
+
+    [Fact]
+    public async Task ExtractMethodDeclarations_FindsMethodsAndBuildsFqn()
+    {
+        // Arrange
+        var analyzer = new RoslynAnalyzer();
+        var testFile = Path.Combine(AppContext.BaseDirectory,
+            "..", "..", "..", "TestData", "MultiNamespace.cs");
+        testFile = Path.GetFullPath(testFile);
+        Assert.True(File.Exists(testFile), $"Test file not found: {testFile}");
+
+        var compilation = await analyzer.CreateCompilationFromFilesAsync(testFile);
+        var tree = compilation.SyntaxTrees.First();
+        var model = compilation.GetSemanticModel(tree);
+
+        // Act
+        var methods = analyzer.ExtractMethodDeclarations(tree, model);
+
+        // Assert
+        Assert.NotNull(methods);
+        Assert.Contains("First.Namespace.Alpha.DoSomething", methods);
+        Assert.Contains("First.Namespace.Alpha.DoStatic", methods);
+        Assert.Contains("Second.Namespace.Inner.Beta.Add", methods);
+        Assert.Contains("Second.Namespace.Inner.Beta.Name", methods);
+    }
 }

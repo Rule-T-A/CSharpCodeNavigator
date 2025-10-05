@@ -11,7 +11,7 @@
 
 ## Phase 1 Breakdown: Small, Incremental Steps
 
-**Progress**: 2/8 steps completed (25%) - Steps 1.1–1.2 ✅ COMPLETED
+**Progress**: 3/8 steps completed (37.5%) - Steps 1.1–1.3 ✅ COMPLETED
 
 ### **Step 1.1: Project Setup & Basic Models** ⏱️ *30 minutes* ✅ **COMPLETED**
 **Goal**: Create foundation data structures and verify project setup
@@ -100,32 +100,34 @@
 
 ---
 
-### **Step 1.3: Method Declaration Extraction** ⏱️ *30 minutes*
+### **Step 1.3: Method Declaration Extraction** ⏱️ *30 minutes* ✅ **COMPLETED**
 **Goal**: Extract method declarations and generate fully qualified names
 
-- [ ] Implement method extraction in `RoslynAnalyzer`:
-  - [ ] `ExtractMethodDeclarations(SyntaxTree tree, SemanticModel model)` method
-  - [ ] Find all `MethodDeclarationSyntax` nodes
-  - [ ] Get `IMethodSymbol` from semantic model
-  - [ ] Generate fully qualified names
+- [x] Implement method extraction in `RoslynAnalyzer`:
+  - [x] `ExtractMethodDeclarations(SyntaxTree tree, SemanticModel model)` method
+  - [x] Find all `MethodDeclarationSyntax` nodes
+  - [x] Get `IMethodSymbol` from semantic model
+  - [x] Generate fully qualified names
 
-- [ ] Create `GetFullyQualifiedName(ISymbol symbol)` helper method:
-  - [ ] Format: `Namespace.ClassName.MethodName`
-  - [ ] Handle global namespace
-  - [ ] Handle nested types
+- [x] Create `GetFullyQualifiedName(ISymbol symbol)` helper method:
+  - [x] Format: `Namespace.ClassName.MethodName`
+  - [x] Handle global namespace
+  - [x] Handle nested types
 
-- [ ] Create test C# file with multiple methods:
-  - [ ] Class with 3-4 methods
-  - [ ] Methods in different namespaces
-  - [ ] Static and instance methods
+- [x] Create test C# file with multiple methods:
+  - [x] Class with 3-4 methods
+  - [x] Methods in different namespaces
+  - [x] Static and instance methods
 
-- [ ] Write tests:
-  - [ ] Test method extraction from single file
-  - [ ] Test fully qualified name generation
-  - [ ] Test namespace handling
-  - [ ] Verify all expected methods are found
+- [x] Write tests:
+  - [x] Test method extraction from single file
+  - [x] Test fully qualified name generation
+  - [x] Test namespace handling
+  - [x] Verify all expected methods are found
 
-- [ ] Verify method extraction works correctly
+- [x] Verify method extraction works correctly
+
+**Notes**: Added multi-namespace test data (`MultiNamespace.cs`) and tests confirming extraction and FQN formatting for static and instance methods across namespaces.
 
 ---
 
