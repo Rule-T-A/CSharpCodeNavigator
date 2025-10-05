@@ -19,6 +19,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="TestData\Errors\Unresolved.cs" />
+    <None Include="TestData\Errors\Unresolved.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\CodeAnalyzer.Roslyn\CodeAnalyzer.Roslyn.csproj" />
   </ItemGroup>
 

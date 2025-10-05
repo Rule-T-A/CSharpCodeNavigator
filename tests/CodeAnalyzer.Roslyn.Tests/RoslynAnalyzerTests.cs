@@ -175,4 +175,43 @@ public class RoslynAnalyzerTests
         // Assert extension call resolved to extension method definition
         Assert.Contains(allCalls, c => c.Caller.EndsWith("CrossFile.Use.Consumer.Run") && c.Callee.EndsWith("CrossFile.Svc.ServiceExtensions.Extra"));
     }
+
+    [Fact]
+    public async Task CreateCompilationFromFilesAsync_UnresolvedSymbol_DoesNotCrashAndSkipsCall()
+    {
+        // Arrange
+        var analyzer = new RoslynAnalyzer();
+        var file = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "TestData", "Errors", "Unresolved.cs");
+        file = Path.GetFullPath(file);
+        Assert.True(File.Exists(file));
+
+        // Act
+        var compilation = await analyzer.CreateCompilationFromFilesAsync(file);
+        var tree = compilation.SyntaxTrees.First();
+        var model = compilation.GetSemanticModel(tree);
+        var calls = analyzer.ExtractMethodCalls(tree, model);
+
+        // Assert: no exceptions, calls either empty or without MissingType.DoThing
+        Assert.DoesNotContain(calls, c => c.Callee.Contains("MissingType"));
+    }
+
+    [Fact]
+    public async Task VirtualDispatch_CallRecordedOnBaseMethodSymbol()
+    {
+        // Arrange
+        var analyzer = new RoslynAnalyzer();
+        var file = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "TestData", "Virtual", "VirtualDispatch.cs");
+        file = Path.GetFullPath(file);
+        Assert.True(File.Exists(file));
+
+        var compilation = await analyzer.CreateCompilationFromFilesAsync(file);
+
+        // Collect calls
+        var calls = new List<CodeAnalyzer.Roslyn.Models.MethodCallInfo>();
+        foreach (var t in compilation.SyntaxTrees)
+            calls.AddRange(analyzer.ExtractMethodCalls(t, compilation.GetSemanticModel(t)));
+
+        // Expect: Uses.Run -> Base.Do (recorded against base symbol per Step 1.5 policy)
+        Assert.Contains(calls, c => c.Caller.EndsWith("Virtual.Dispatch.Uses.Run") && c.Callee.EndsWith("Virtual.Dispatch.Base.Do"));
+    }
 }
