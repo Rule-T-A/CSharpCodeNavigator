@@ -13,11 +13,20 @@ namespace CodeAnalyzer.Roslyn;
 /// </summary>
 public class RoslynAnalyzer
 {
+    private readonly IVectorStoreWriter? _vectorStore;
     /// <summary>
     /// Creates a new instance of RoslynAnalyzer
     /// </summary>
     public RoslynAnalyzer()
     {
+    }
+
+    /// <summary>
+    /// Optional constructor to enable persistence to a vector store
+    /// </summary>
+    public RoslynAnalyzer(IVectorStoreWriter vectorStore)
+    {
+        _vectorStore = vectorStore;
     }
 
     /// <summary>
@@ -58,6 +67,21 @@ public class RoslynAnalyzer
                 var calls = ExtractMethodCalls(tree, model);
                 result.MethodCalls.AddRange(calls);
                 result.FilesProcessed += 1;
+
+                if (_vectorStore != null && calls.Count > 0)
+                {
+                    foreach (var call in calls)
+                    {
+                        try
+                        {
+                            await StoreMethodCallAsync(call).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            result.Errors.Add($"VectorStore write failed: {ex.Message}");
+                        }
+                    }
+                }
             }
         }
         catch (Exception ex)
@@ -97,6 +121,21 @@ public class RoslynAnalyzer
 
             var calls = ExtractMethodCalls(tree, model);
             result.MethodCalls.AddRange(calls);
+
+            if (_vectorStore != null && calls.Count > 0)
+            {
+                foreach (var call in calls)
+                {
+                    try
+                    {
+                        await StoreMethodCallAsync(call).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        result.Errors.Add($"VectorStore write failed: {ex.Message}");
+                    }
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -281,5 +320,28 @@ public class RoslynAnalyzer
         var methodDecl = node.AncestorsAndSelf().OfType<MethodDeclarationSyntax>().FirstOrDefault();
         if (methodDecl == null) return null;
         return model.GetDeclaredSymbol(methodDecl) as IMethodSymbol;
+    }
+
+    private async Task StoreMethodCallAsync(MethodCallInfo call)
+    {
+        if (_vectorStore == null)
+            return;
+
+        var content = $"Method {call.Caller} in class {call.CallerClass} calls method {call.Callee} in class {call.CalleeClass}. This call happens in file {call.FilePath} at line {call.LineNumber}.";
+
+        var metadata = new Dictionary<string, object>
+        {
+            ["type"] = "method_call",
+            ["caller"] = call.Caller,
+            ["callee"] = call.Callee,
+            ["caller_class"] = call.CallerClass,
+            ["callee_class"] = call.CalleeClass,
+            ["caller_namespace"] = call.CallerNamespace,
+            ["callee_namespace"] = call.CalleeNamespace,
+            ["file_path"] = call.FilePath,
+            ["line_number"] = call.LineNumber
+        };
+
+        await _vectorStore.AddTextAsync(content, metadata).ConfigureAwait(false);
     }
 }

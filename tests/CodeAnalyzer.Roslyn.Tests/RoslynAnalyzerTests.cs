@@ -1,6 +1,7 @@
 using CodeAnalyzer.Roslyn;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using CodeAnalyzer.Roslyn.Models;
 
 namespace CodeAnalyzer.Roslyn.Tests;
 
@@ -137,6 +138,24 @@ public class RoslynAnalyzerTests
         Assert.True(result.MethodsAnalyzed >= 3);
         Assert.NotEmpty(result.MethodCalls);
         Assert.Empty(result.Errors);
+    }
+
+    [Fact]
+    public async Task AnalyzeFileAsync_PersistsCalls_WhenVectorStoreProvided()
+    {
+        // Arrange
+        var file = Path.Combine(AppContext.BaseDirectory,
+            "..", "..", "..", "TestData", "CallsSample.cs");
+        var writer = new FakeVectorStoreWriter();
+        var analyzer = new RoslynAnalyzer(writer);
+
+        // Act
+        var result = await analyzer.AnalyzeFileAsync(Path.GetFullPath(file));
+
+        // Assert
+        Assert.NotEmpty(result.MethodCalls);
+        Assert.True(writer.Writes.Count >= result.MethodCalls.Count);
+        Assert.All(writer.Writes, w => Assert.Equal("method_call", w.metadata["type"].ToString()));
     }
 
     [Fact]
