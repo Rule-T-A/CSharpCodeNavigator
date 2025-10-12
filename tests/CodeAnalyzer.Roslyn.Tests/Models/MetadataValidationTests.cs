@@ -76,7 +76,7 @@ public class MetadataValidationTests
         // Arrange
         var call = new MethodCallInfo
         {
-            Caller = null,
+            Caller = null!,
             Callee = "OtherNamespace.OtherClass.OtherMethod",
             CallerClass = "Class",
             CalleeClass = "OtherClass",
@@ -150,7 +150,7 @@ public class MetadataValidationTests
         {
             Caller = "Namespace.Class.Method",
             Callee = "OtherNamespace.OtherClass.OtherMethod",
-            CallerClass = null,
+            CallerClass = null!,
             CalleeClass = "OtherClass",
             CallerNamespace = "Namespace",
             CalleeNamespace = "OtherNamespace",
@@ -202,7 +202,7 @@ public class MetadataValidationTests
             CalleeClass = "OtherClass",
             CallerNamespace = "Namespace",
             CalleeNamespace = "OtherNamespace",
-            FilePath = null,
+            FilePath = null!,
             LineNumber = 42
         };
 
@@ -295,10 +295,10 @@ public class MetadataValidationTests
         // Arrange
         var call = new MethodCallInfo
         {
-            Caller = null,
+            Caller = null!,
             Callee = "",
             CallerClass = "   ",
-            CalleeClass = null,
+            CalleeClass = null!,
             CallerNamespace = "Namespace",
             CalleeNamespace = "OtherNamespace",
             FilePath = "",

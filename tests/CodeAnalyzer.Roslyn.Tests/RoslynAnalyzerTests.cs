@@ -19,14 +19,6 @@ public class RoslynAnalyzerTests
     }
 
     [Fact]
-    public void AnalyzeFileAsync_NotImplemented_ThrowsNotImplementedException()
-    {
-        // This test is obsolete after Step 1.4 implementation.
-        // Keeping placeholder to avoid duplicate fact names if referenced.
-        Assert.True(true);
-    }
-
-    [Fact]
     public async Task CreateCompilationFromFilesAsync_ParsesSyntaxAndCreatesSemanticModel()
     {
         // Arrange

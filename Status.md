@@ -78,15 +78,17 @@ The C# Code Navigator is a Roslyn-based code analysis tool that extracts method 
   - Real vector store integration with actual data persistence
   - Comprehensive integration tests (4 tests, all passing)
 
-### 🔄 In Progress Steps
-
 #### Step 1.7: Attribute/Initializer Call Handling
-- **Status**: 🔄 PENDING
-- **Requirements**:
-  - Detect method calls within attributes
-  - Detect method calls in field/property initializers
-  - Implement `AnalyzerOptions` for controlling inclusion
-  - Add configuration for optional call types
+- **Status**: ✅ COMPLETED
+- **Implementation**: Enhanced `ExtractMethodCalls()` method with conditional processing
+- **Features**:
+  - Optional detection of attribute constructor calls
+  - Optional detection of field/property initializer calls
+  - Controlled by `AnalyzerOptions.AttributeInitializerCalls` (defaults to false)
+  - Proper caller attribution (containing member/type for attributes, containing type for initializers)
+  - Comprehensive test coverage (5 new tests)
+
+### 🔄 In Progress Steps
 
 #### Step 1.8: Console Test Harness
 - **Status**: 🔄 PENDING
@@ -99,8 +101,8 @@ The C# Code Navigator is a Roslyn-based code analysis tool that extracts method 
 ## Test Coverage Status
 
 ### Test Results Summary
-- **Total Tests**: 47 tests passing ✅
-- **Roslyn Analyzer Tests**: 43 tests passing
+- **Total Tests**: 51 tests passing ✅
+- **Roslyn Analyzer Tests**: 47 tests passing
 - **Vector Store Integration Tests**: 4 tests passing
 - **Navigation Tests**: 0 tests (placeholder implementation)
 
@@ -109,6 +111,7 @@ The C# Code Navigator is a Roslyn-based code analysis tool that extracts method 
 2. **Integration Tests**: Real vector store integration with data persistence
 3. **Validation Tests**: Metadata validation and normalization
 4. **Error Handling Tests**: Syntax errors, unresolved symbols, invalid data
+5. **Attribute/Initializer Tests**: Optional call type detection and control
 
 ## Technical Implementation Details
 
@@ -147,15 +150,37 @@ The C# Code Navigator is a Roslyn-based code analysis tool that extracts method 
 ### Known Issues
 1. **Navigation Module**: Placeholder implementation, no real functionality
 2. **Console Application**: Basic structure only, needs full implementation
-3. **Attribute/Initializer Calls**: Not yet implemented
-4. **Performance**: No optimization for large codebases
-5. **Configuration**: Limited options for analysis behavior
+3. **Performance**: No optimization for large codebases
+4. **Configuration**: Limited options for analysis behavior
 
-### Technical Debt
-1. **Nullability Warnings**: Several CS8625 warnings in test code
-2. **Async Patterns**: Some CS1998 warnings for unused await operators
-3. **Error Handling**: Could be more granular for different error types
-4. **Logging**: Basic logging implementation, could be enhanced
+### Technical Debt Resolution (Completed)
+
+#### ✅ **Nullability Warnings Fixed**
+- **Issue**: 6 CS8625 warnings in test code
+- **Resolution**: Fixed all nullability warnings using proper nullable annotations
+- **Files Updated**: 
+  - `FileVectorStoreAdapter.cs` - Added nullable parameter annotation
+  - `MetadataValidationTests.cs` - Used `null!` operator for intentional test cases
+- **Result**: Clean build with 0 warnings
+
+#### ✅ **Error Handling Enhanced**
+- **Issue**: Generic error messages without context
+- **Resolution**: Enhanced error messages with specific context and details
+- **Improvements**:
+  - VectorStore errors now include caller/callee information
+  - Analysis errors include file/project path context
+  - More actionable error messages for debugging
+- **Result**: Better debugging experience and error traceability
+
+#### ✅ **Code Quality Improvements**
+- **Issue**: Obsolete test cleanup needed
+- **Resolution**: Removed obsolete placeholder test
+- **Result**: Cleaner test suite with 51 meaningful tests
+
+### Remaining Considerations (Low Priority)
+1. **Logging**: Basic logging implementation (sufficient for current needs)
+2. **Performance**: No optimization for large codebases (acceptable for Phase 1)
+3. **Configuration**: Limited options (adequate for current scope)
 
 ## Dependencies and Packages
 
@@ -187,10 +212,10 @@ tests/
 ## Next Steps for New Agent
 
 ### Immediate Priorities
-1. **Complete Step 1.7**: Implement attribute/initializer call handling with AnalyzerOptions
-2. **Complete Step 1.8**: Create full console test harness with CLI interface
-3. **Enhance Navigation Module**: Implement real navigation functionality
-4. **Performance Optimization**: Handle large codebases efficiently
+1. **Complete Step 1.8**: Create full console test harness with CLI interface
+2. **Enhance Navigation Module**: Implement real navigation functionality
+3. **Performance Optimization**: Handle large codebases efficiently (future consideration)
+4. **Advanced Configuration**: Add more analysis options (future enhancement)
 
 ### Development Guidelines
 1. **Test-Driven Development**: Maintain 100% test coverage
@@ -205,15 +230,17 @@ tests/
 - `src/CodeAnalyzer.Navigation/` - Navigation module (needs implementation)
 
 ## Success Metrics
-- ✅ **47/47 tests passing** - All current functionality verified
+- ✅ **51/51 tests passing** - All current functionality verified
 - ✅ **Real vector store integration** - Actual data persistence working
-- ✅ **Comprehensive error handling** - Graceful failure management
+- ✅ **Comprehensive error handling** - Graceful failure management with specific context
 - ✅ **Metadata validation** - Schema compliance enforced
+- ✅ **Attribute/Initializer call support** - Optional detection implemented
+- ✅ **Technical debt resolved** - Clean build, enhanced error messages, obsolete code removed
 - 🔄 **Console application** - Needs full implementation
 - 🔄 **Navigation features** - Needs real functionality
 
 ---
 
 **Last Updated**: October 12, 2025  
-**Phase 1 Progress**: 6/8 steps completed (75%)  
-**Overall Status**: Solid foundation with real vector store integration, ready for final Phase 1 completion
+**Phase 1 Progress**: 7/8 steps completed (87.5%)  
+**Overall Status**: Clean, production-ready foundation with comprehensive analysis capabilities, technical debt resolved, ready for final Phase 1 completion

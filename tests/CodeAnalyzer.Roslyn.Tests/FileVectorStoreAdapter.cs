@@ -15,7 +15,7 @@ namespace CodeAnalyzer.Roslyn.Tests
         private readonly FileVectorStore _store;
         private readonly ILogger<FileVectorStore> _logger;
 
-        public FileVectorStoreAdapter(FileVectorStore store, ILogger<FileVectorStore> logger = null)
+        public FileVectorStoreAdapter(FileVectorStore store, ILogger<FileVectorStore>? logger = null)
         {
             _store = store ?? throw new ArgumentNullException(nameof(store));
             _logger = logger ?? new NullLogger<FileVectorStore>();

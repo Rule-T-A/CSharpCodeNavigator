@@ -91,7 +91,7 @@ public class RoslynAnalyzer
                         }
                         catch (Exception ex)
                         {
-                            result.Errors.Add($"VectorStore write failed: {ex.Message}");
+                            result.Errors.Add($"VectorStore write failed for call {call.Caller} -> {call.Callee}: {ex.Message}");
                         }
                     }
                 }
@@ -99,7 +99,7 @@ public class RoslynAnalyzer
         }
         catch (Exception ex)
         {
-            result.Errors.Add(ex.Message);
+            result.Errors.Add($"Project analysis failed for '{projectPath}': {ex.Message}");
         }
 
         return result;
@@ -153,14 +153,14 @@ public class RoslynAnalyzer
                     }
                     catch (Exception ex)
                     {
-                        result.Errors.Add($"VectorStore write failed: {ex.Message}");
+                        result.Errors.Add($"VectorStore write failed for call {call.Caller} -> {call.Callee}: {ex.Message}");
                     }
                 }
             }
         }
         catch (Exception ex)
         {
-            result.Errors.Add(ex.Message);
+            result.Errors.Add($"File analysis failed for '{filePath}': {ex.Message}");
         }
 
         return result;
