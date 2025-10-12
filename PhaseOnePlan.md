@@ -240,22 +240,27 @@
   - [x] Incomplete code (syntax errors) – diagnostics collected, no throw
   - [x] Missing references – surfaced via diagnostics
   - [x] Local functions / lambdas – calls attributed to containing method
-  - [ ] Attribute/initializer calls – skipped by default (option to change later)
+  - [x] Attribute/initializer calls – controlled by `AttributeInitializerCalls` option
 
 - [x] Create problematic test files:
   - [x] File with syntax errors (excluded from compilation)
   - [x] File referencing missing type (excluded from compilation)
   - [x] Local/lambda call scenarios
+  - [x] Attribute constructor call scenarios
+  - [x] Field/property initializer call scenarios
 
 - [x] Write tests:
   - [x] Test error handling
   - [x] Test graceful degradation
   - [x] Test error reporting
   - [x] Test partial analysis success
+  - [x] Test attribute constructor calls (enabled/disabled)
+  - [x] Test field/property initializer calls (enabled/disabled)
+  - [x] Test local/lambda behavior consistency
 
 - [x] Verify robust error handling
 
-**Notes**: Added `AnalyzerOptions` (`IncludeWarningsInErrors`, `RecordExternalCalls`, `AttributeInitializerCalls`) and `WithOptions`. Diagnostics are collected in both project and file modes. Extraction remains null-safe and non-throwing. Calls inside local functions and lambdas are attributed to the containing method.
+**Notes**: Added `AnalyzerOptions` (`IncludeWarningsInErrors`, `RecordExternalCalls`, `AttributeInitializerCalls`) and `WithOptions`. Diagnostics are collected in both project and file modes. Extraction remains null-safe and non-throwing. Calls inside local functions and lambdas are attributed to the containing method. Attribute constructor calls and field/property initializer calls are now supported when `AttributeInitializerCalls` option is enabled.
 
 ---
 

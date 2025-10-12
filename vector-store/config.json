@@ -1,0 +1,7 @@
+{
+  "StorePath": "./vector-store",
+  "ChunkSize": 1000,
+  "MaxMemoryChunks": 10,
+  "EnableEmbeddingGeneration": true,
+  "UseMemoryMapping": true
+}

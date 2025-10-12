@@ -19,7 +19,7 @@ public class RoslynAnalyzerTests
     }
 
     [Fact]
-    public async Task AnalyzeFileAsync_NotImplemented_ThrowsNotImplementedException()
+    public void AnalyzeFileAsync_NotImplemented_ThrowsNotImplementedException()
     {
         // This test is obsolete after Step 1.4 implementation.
         // Keeping placeholder to avoid duplicate fact names if referenced.
@@ -269,6 +269,115 @@ public class RoslynAnalyzerTests
             calls.AddRange(analyzer.ExtractMethodCalls(t, compilation.GetSemanticModel(t)));
 
         // Assert
+        Assert.Contains(calls, c => c.Caller.EndsWith("Local.Lambda.Uses.Run") && c.Callee.Contains("System.Console.WriteLine"));
+    }
+
+    [Fact]
+    public async Task AttributeConstructorCalls_WhenEnabled_AreRecorded()
+    {
+        // Arrange
+        var analyzer = new RoslynAnalyzer().WithOptions(new AnalyzerOptions { AttributeInitializerCalls = true });
+        var file = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "TestData", "Attributes", "AttributeCalls.cs");
+        file = Path.GetFullPath(file);
+        Assert.True(File.Exists(file));
+
+        var compilation = await analyzer.CreateCompilationFromFilesAsync(file);
+
+        // Act
+        var calls = new List<CodeAnalyzer.Roslyn.Models.MethodCallInfo>();
+        foreach (var t in compilation.SyntaxTrees)
+            calls.AddRange(analyzer.ExtractMethodCalls(t, compilation.GetSemanticModel(t)));
+
+        // Assert: Should find attribute constructor calls
+        Assert.Contains(calls, c => c.Callee.Contains("System.SerializableAttribute") && c.Callee.Contains(".ctor"));
+        Assert.Contains(calls, c => c.Callee.Contains("System.ObsoleteAttribute") && c.Callee.Contains(".ctor"));
+        Assert.Contains(calls, c => c.Callee.Contains("Test.Attributes.TestMethodAttribute") && c.Callee.Contains(".ctor"));
+        Assert.Contains(calls, c => c.Callee.Contains("Test.Attributes.TestMethodWithParamsAttribute") && c.Callee.Contains(".ctor"));
+    }
+
+    [Fact]
+    public async Task AttributeConstructorCalls_WhenDisabled_AreSkipped()
+    {
+        // Arrange
+        var analyzer = new RoslynAnalyzer().WithOptions(new AnalyzerOptions { AttributeInitializerCalls = false });
+        var file = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "TestData", "Attributes", "AttributeCalls.cs");
+        file = Path.GetFullPath(file);
+        Assert.True(File.Exists(file));
+
+        var compilation = await analyzer.CreateCompilationFromFilesAsync(file);
+
+        // Act
+        var calls = new List<CodeAnalyzer.Roslyn.Models.MethodCallInfo>();
+        foreach (var t in compilation.SyntaxTrees)
+            calls.AddRange(analyzer.ExtractMethodCalls(t, compilation.GetSemanticModel(t)));
+
+        // Assert: Should NOT find attribute constructor calls
+        Assert.DoesNotContain(calls, c => c.Callee.Contains("System.SerializableAttribute") && c.Callee.Contains(".ctor"));
+        Assert.DoesNotContain(calls, c => c.Callee.Contains("System.ObsoleteAttribute") && c.Callee.Contains(".ctor"));
+        Assert.DoesNotContain(calls, c => c.Callee.Contains("Test.Attributes.TestMethodAttribute") && c.Callee.Contains(".ctor"));
+    }
+
+    [Fact]
+    public async Task FieldPropertyInitializerCalls_WhenEnabled_AreRecorded()
+    {
+        // Arrange
+        var analyzer = new RoslynAnalyzer().WithOptions(new AnalyzerOptions { AttributeInitializerCalls = true });
+        var file = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "TestData", "Initializers", "FieldInitializers.cs");
+        file = Path.GetFullPath(file);
+        Assert.True(File.Exists(file));
+
+        var compilation = await analyzer.CreateCompilationFromFilesAsync(file);
+
+        // Act
+        var calls = new List<CodeAnalyzer.Roslyn.Models.MethodCallInfo>();
+        foreach (var t in compilation.SyntaxTrees)
+            calls.AddRange(analyzer.ExtractMethodCalls(t, compilation.GetSemanticModel(t)));
+
+        // Assert: Should find initializer method calls
+        Assert.Contains(calls, c => c.Callee.EndsWith("Test.Initializers.InitializerTest.GetDefaultName") && c.Caller.EndsWith("Test.Initializers.InitializerTest"));
+        Assert.Contains(calls, c => c.Callee.EndsWith("Test.Initializers.InitializerTest.CalculateCount") && c.Caller.EndsWith("Test.Initializers.InitializerTest"));
+        Assert.Contains(calls, c => c.Callee.EndsWith("Test.Initializers.InitializerTest.CreateDescription") && c.Caller.EndsWith("Test.Initializers.InitializerTest"));
+    }
+
+    [Fact]
+    public async Task FieldPropertyInitializerCalls_WhenDisabled_AreSkipped()
+    {
+        // Arrange
+        var analyzer = new RoslynAnalyzer().WithOptions(new AnalyzerOptions { AttributeInitializerCalls = false });
+        var file = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "TestData", "Initializers", "FieldInitializers.cs");
+        file = Path.GetFullPath(file);
+        Assert.True(File.Exists(file));
+
+        var compilation = await analyzer.CreateCompilationFromFilesAsync(file);
+
+        // Act
+        var calls = new List<CodeAnalyzer.Roslyn.Models.MethodCallInfo>();
+        foreach (var t in compilation.SyntaxTrees)
+            calls.AddRange(analyzer.ExtractMethodCalls(t, compilation.GetSemanticModel(t)));
+
+        // Assert: Should NOT find initializer method calls
+        Assert.DoesNotContain(calls, c => c.Callee.EndsWith("Test.Initializers.InitializerTest.GetDefaultName"));
+        Assert.DoesNotContain(calls, c => c.Callee.EndsWith("Test.Initializers.InitializerTest.CalculateCount"));
+        Assert.DoesNotContain(calls, c => c.Callee.EndsWith("Test.Initializers.InitializerTest.CreateDescription"));
+    }
+
+    [Fact]
+    public async Task LocalLambdaBehavior_RemainsConsistent_WithAttributeInitializerCallsEnabled()
+    {
+        // Arrange
+        var analyzer = new RoslynAnalyzer().WithOptions(new AnalyzerOptions { AttributeInitializerCalls = true });
+        var file = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "TestData", "Locals", "LocalAndLambda.cs");
+        file = Path.GetFullPath(file);
+        Assert.True(File.Exists(file));
+
+        var compilation = await analyzer.CreateCompilationFromFilesAsync(file);
+
+        // Act
+        var calls = new List<CodeAnalyzer.Roslyn.Models.MethodCallInfo>();
+        foreach (var t in compilation.SyntaxTrees)
+            calls.AddRange(analyzer.ExtractMethodCalls(t, compilation.GetSemanticModel(t)));
+
+        // Assert: Local/lambda behavior should remain unchanged
         Assert.Contains(calls, c => c.Caller.EndsWith("Local.Lambda.Uses.Run") && c.Callee.Contains("System.Console.WriteLine"));
     }
 }

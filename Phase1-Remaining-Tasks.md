@@ -28,14 +28,14 @@ This document tracks the remaining items from Phase 1 (excluding 1.8) and how we
 
 ### 1.7 Attribute/Initializer Calls
 
-- [ ] Implement optional handling controlled by `AnalyzerOptions.AttributeInitializerCalls`:
-  - [ ] Detect attribute constructor invocations and field/property initializer invocations
-  - [ ] Attribute constructor: include as `method_call` with caller being the containing member or type as documented; gate by option
-  - [ ] Initializers: include constructor-body initializer calls if option enabled; otherwise continue skipping
-- [ ] Tests:
-  - [ ] Attribute on class and method with constructor call recorded when enabled and absent when disabled
-  - [ ] Field/property initializer invoking a method
-  - [ ] Ensure local/lambda behavior remains consistent
+- [x] Implement optional handling controlled by `AnalyzerOptions.AttributeInitializerCalls`:
+  - [x] Detect attribute constructor invocations and field/property initializer invocations
+  - [x] Attribute constructor: include as `method_call` with caller being the containing member or type as documented; gate by option
+  - [x] Initializers: include constructor-body initializer calls if option enabled; otherwise continue skipping
+- [x] Tests:
+  - [x] Attribute on class and method with constructor call recorded when enabled and absent when disabled
+  - [x] Field/property initializer invoking a method
+  - [x] Ensure local/lambda behavior remains consistent
 
 ### Documentation Updates
 

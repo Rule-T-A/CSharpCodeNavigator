@@ -333,6 +333,18 @@ public class RoslynAnalyzer
             results.Add(call);
         }
 
+        // Process attribute constructor calls and initializer calls if enabled
+        if (_options.AttributeInitializerCalls)
+        {
+            // Process attribute constructor calls
+            var attributeCalls = ExtractAttributeConstructorCalls(tree, model);
+            results.AddRange(attributeCalls);
+            
+            // Process field/property initializer calls  
+            var initializerCalls = ExtractInitializerCalls(tree, model);
+            results.AddRange(initializerCalls);
+        }
+
         return results;
     }
 
@@ -369,26 +381,326 @@ public class RoslynAnalyzer
         return current;
     }
 
+    /// <summary>
+    /// Extract method calls from attribute constructor invocations.
+    /// </summary>
+    private List<MethodCallInfo> ExtractAttributeConstructorCalls(SyntaxTree tree, SemanticModel model)
+    {
+        var results = new List<MethodCallInfo>();
+        var root = tree.GetRoot();
+
+        foreach (var attributeList in root.DescendantNodes().OfType<AttributeListSyntax>())
+        {
+            foreach (var attribute in attributeList.Attributes)
+            {
+                var symbolInfo = model.GetSymbolInfo(attribute);
+                var constructorSymbol = symbolInfo.Symbol as IMethodSymbol;
+                if (constructorSymbol == null && symbolInfo.CandidateSymbols.Length > 0)
+                {
+                    constructorSymbol = symbolInfo.CandidateSymbols.OfType<IMethodSymbol>().FirstOrDefault();
+                }
+                if (constructorSymbol == null)
+                    continue; // unresolved; skip
+
+                // Determine the caller (containing member or type)
+                var callerSymbol = GetContainingMemberOrTypeSymbol(model, attribute);
+                if (callerSymbol == null)
+                    continue;
+
+                var location = attribute.GetLocation().GetLineSpan();
+
+                var call = new MethodCallInfo
+                {
+                    Caller = GetFullyQualifiedName(callerSymbol),
+                    Callee = GetFullyQualifiedName(constructorSymbol),
+                    CallerClass = callerSymbol.ContainingType?.Name ?? string.Empty,
+                    CalleeClass = constructorSymbol.ContainingType?.Name ?? string.Empty,
+                    CallerNamespace = callerSymbol.ContainingNamespace?.ToDisplayString() ?? string.Empty,
+                    CalleeNamespace = constructorSymbol.ContainingNamespace?.ToDisplayString() ?? string.Empty,
+                    FilePath = location.Path,
+                    LineNumber = location.StartLinePosition.Line + 1
+                };
+
+                results.Add(call);
+            }
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Extract method calls from field and property initializers.
+    /// </summary>
+    private List<MethodCallInfo> ExtractInitializerCalls(SyntaxTree tree, SemanticModel model)
+    {
+        var results = new List<MethodCallInfo>();
+        var root = tree.GetRoot();
+
+        // Process field initializers
+        foreach (var field in root.DescendantNodes().OfType<FieldDeclarationSyntax>())
+        {
+            if (field.Declaration?.Variables != null)
+            {
+                foreach (var variable in field.Declaration.Variables)
+                {
+                    if (variable.Initializer?.Value != null)
+                    {
+                        var initializerCalls = ExtractMethodCallsFromExpression(variable.Initializer.Value, model, field.Declaration.Type);
+                        results.AddRange(initializerCalls);
+                    }
+                }
+            }
+        }
+
+        // Process property initializers
+        foreach (var property in root.DescendantNodes().OfType<PropertyDeclarationSyntax>())
+        {
+            if (property.Initializer?.Value != null)
+            {
+                var initializerCalls = ExtractMethodCallsFromExpression(property.Initializer.Value, model, property.Type);
+                results.AddRange(initializerCalls);
+            }
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Extract method calls from an expression (used for initializers).
+    /// </summary>
+    private List<MethodCallInfo> ExtractMethodCallsFromExpression(ExpressionSyntax expression, SemanticModel model, TypeSyntax containingType)
+    {
+        var results = new List<MethodCallInfo>();
+
+        foreach (var invocation in expression.DescendantNodesAndSelf().OfType<InvocationExpressionSyntax>())
+        {
+            var symbolInfo = model.GetSymbolInfo(invocation);
+            var calleeSymbol = symbolInfo.Symbol as IMethodSymbol;
+            if (calleeSymbol == null && symbolInfo.CandidateSymbols.Length > 0)
+            {
+                calleeSymbol = symbolInfo.CandidateSymbols.OfType<IMethodSymbol>().FirstOrDefault();
+            }
+            if (calleeSymbol == null)
+                continue; // unresolved; skip
+
+            // Normalize extension method to the defining static method
+            if (calleeSymbol.ReducedFrom is IMethodSymbol reduced)
+            {
+                calleeSymbol = reduced;
+            }
+
+            // Normalize inheritance/interface dispatch targets per 1.5
+            calleeSymbol = NormalizeCalleeSymbol(calleeSymbol);
+
+            // For initializers, the caller is the containing type
+            var callerSymbol = GetContainingTypeSymbol(model, containingType);
+            if (callerSymbol == null)
+                continue;
+
+            var location = invocation.GetLocation().GetLineSpan();
+
+            var call = new MethodCallInfo
+            {
+                Caller = GetFullyQualifiedName(callerSymbol),
+                Callee = GetFullyQualifiedName(calleeSymbol),
+                CallerClass = callerSymbol.Name,
+                CalleeClass = calleeSymbol.ContainingType?.Name ?? string.Empty,
+                CallerNamespace = callerSymbol.ContainingNamespace?.ToDisplayString() ?? string.Empty,
+                CalleeNamespace = calleeSymbol.ContainingNamespace?.ToDisplayString() ?? string.Empty,
+                FilePath = location.Path,
+                LineNumber = location.StartLinePosition.Line + 1
+            };
+
+            results.Add(call);
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Find the containing member (method, property, field) or type symbol for an attribute.
+    /// </summary>
+    private ISymbol? GetContainingMemberOrTypeSymbol(SemanticModel model, AttributeSyntax attribute)
+    {
+        // Walk up the syntax tree to find the containing declaration
+        var containingNode = attribute.Ancestors().FirstOrDefault(node => 
+            node is MethodDeclarationSyntax || 
+            node is PropertyDeclarationSyntax || 
+            node is FieldDeclarationSyntax || 
+            node is ClassDeclarationSyntax || 
+            node is StructDeclarationSyntax ||
+            node is InterfaceDeclarationSyntax);
+
+        if (containingNode == null)
+            return null;
+
+        return model.GetDeclaredSymbol(containingNode);
+    }
+
+    /// <summary>
+    /// Find the containing type symbol for a type syntax.
+    /// </summary>
+    private INamedTypeSymbol? GetContainingTypeSymbol(SemanticModel model, TypeSyntax typeSyntax)
+    {
+        // Walk up the syntax tree to find the containing type declaration
+        var containingNode = typeSyntax.Ancestors().FirstOrDefault(node => 
+            node is ClassDeclarationSyntax || 
+            node is StructDeclarationSyntax ||
+            node is InterfaceDeclarationSyntax);
+
+        if (containingNode == null)
+            return null;
+
+        return model.GetDeclaredSymbol(containingNode) as INamedTypeSymbol;
+    }
+
     private async Task StoreMethodCallAsync(MethodCallInfo call)
     {
         if (_vectorStore == null)
             return;
 
-        var content = $"Method {call.Caller} in class {call.CallerClass} calls method {call.Callee} in class {call.CalleeClass}. This call happens in file {call.FilePath} at line {call.LineNumber}.";
+        // Validate and normalize metadata before storing
+        var validationResult = ValidateAndNormalizeMetadata(call);
+        if (!validationResult.IsValid)
+        {
+            throw new InvalidOperationException($"Invalid method call metadata: {string.Join(", ", validationResult.Errors)}");
+        }
+
+        var content = $"Method {validationResult.NormalizedCall.Caller} in class {validationResult.NormalizedCall.CallerClass} calls method {validationResult.NormalizedCall.Callee} in class {validationResult.NormalizedCall.CalleeClass}. This call happens in file {validationResult.NormalizedCall.FilePath} at line {validationResult.NormalizedCall.LineNumber}.";
 
         var metadata = new Dictionary<string, object>
         {
             ["type"] = "method_call",
-            ["caller"] = call.Caller,
-            ["callee"] = call.Callee,
-            ["caller_class"] = call.CallerClass,
-            ["callee_class"] = call.CalleeClass,
-            ["caller_namespace"] = call.CallerNamespace,
-            ["callee_namespace"] = call.CalleeNamespace,
-            ["file_path"] = call.FilePath,
-            ["line_number"] = call.LineNumber
+            ["caller"] = validationResult.NormalizedCall.Caller,
+            ["callee"] = validationResult.NormalizedCall.Callee,
+            ["caller_class"] = validationResult.NormalizedCall.CallerClass,
+            ["callee_class"] = validationResult.NormalizedCall.CalleeClass,
+            ["caller_namespace"] = validationResult.NormalizedCall.CallerNamespace,
+            ["callee_namespace"] = validationResult.NormalizedCall.CalleeNamespace,
+            ["file_path"] = validationResult.NormalizedCall.FilePath,
+            ["line_number"] = validationResult.NormalizedCall.LineNumber
         };
 
         await _vectorStore.AddTextAsync(content, metadata).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Validates and normalizes method call metadata according to the required schema.
+    /// </summary>
+    /// <param name="call">The method call to validate</param>
+    /// <returns>Validation result with normalized data or errors</returns>
+    public MetadataValidationResult ValidateAndNormalizeMetadata(MethodCallInfo call)
+    {
+        var errors = new List<string>();
+        var normalizedCall = new MethodCallInfo();
+
+        // Required field validation and normalization
+        normalizedCall.Caller = NormalizeFullyQualifiedName(call.Caller, "caller", errors);
+        normalizedCall.Callee = NormalizeFullyQualifiedName(call.Callee, "callee", errors);
+        normalizedCall.CallerClass = NormalizeClassName(call.CallerClass, "caller_class", errors);
+        normalizedCall.CalleeClass = NormalizeClassName(call.CalleeClass, "callee_class", errors);
+        normalizedCall.CallerNamespace = NormalizeNamespace(call.CallerNamespace, "caller_namespace", errors);
+        normalizedCall.CalleeNamespace = NormalizeNamespace(call.CalleeNamespace, "callee_namespace", errors);
+        normalizedCall.FilePath = NormalizeFilePath(call.FilePath, "file_path", errors);
+        normalizedCall.LineNumber = NormalizeLineNumber(call.LineNumber, "line_number", errors);
+
+        return new MetadataValidationResult
+        {
+            IsValid = errors.Count == 0,
+            Errors = errors,
+            NormalizedCall = normalizedCall
+        };
+    }
+
+    private string NormalizeFullyQualifiedName(string? value, string fieldName, List<string> errors)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            errors.Add($"Required field '{fieldName}' is missing or empty");
+            return string.Empty;
+        }
+
+        var normalized = value.Trim();
+        if (string.IsNullOrEmpty(normalized))
+        {
+            errors.Add($"Required field '{fieldName}' is empty after trimming whitespace");
+            return string.Empty;
+        }
+
+        return normalized;
+    }
+
+    private string NormalizeClassName(string? value, string fieldName, List<string> errors)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            errors.Add($"Required field '{fieldName}' is missing or empty");
+            return string.Empty;
+        }
+
+        var normalized = value.Trim();
+        if (string.IsNullOrEmpty(normalized))
+        {
+            errors.Add($"Required field '{fieldName}' is empty after trimming whitespace");
+            return string.Empty;
+        }
+
+        return normalized;
+    }
+
+    private string NormalizeNamespace(string? value, string fieldName, List<string> errors)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            // Namespace can be empty for global namespace
+            return string.Empty;
+        }
+
+        var normalized = value.Trim();
+        return normalized;
+    }
+
+    private string NormalizeFilePath(string? value, string fieldName, List<string> errors)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            errors.Add($"Required field '{fieldName}' is missing or empty");
+            return string.Empty;
+        }
+
+        var normalized = value.Trim();
+        if (string.IsNullOrEmpty(normalized))
+        {
+            errors.Add($"Required field '{fieldName}' is empty after trimming whitespace");
+            return string.Empty;
+        }
+
+        // Convert to relative path if absolute
+        try
+        {
+            if (Path.IsPathRooted(normalized))
+            {
+                // For now, keep absolute paths as-is, but could normalize to relative
+                // normalized = Path.GetRelativePath(Directory.GetCurrentDirectory(), normalized);
+            }
+        }
+        catch (Exception ex)
+        {
+            errors.Add($"Invalid file path '{normalized}': {ex.Message}");
+            return string.Empty;
+        }
+
+        return normalized;
+    }
+
+    private int NormalizeLineNumber(int value, string fieldName, List<string> errors)
+    {
+        if (value < 1)
+        {
+            errors.Add($"Required field '{fieldName}' must be >= 1, got {value}");
+            return 1; // Default to line 1
+        }
+
+        return value;
     }
 }
