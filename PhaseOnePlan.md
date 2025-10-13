@@ -1,11 +1,13 @@
 # Phase 1: Roslyn Analysis & Indexing Pipeline - Implementation Plan
 
 ## Overview
-**Goal**: Extract method call relationships from C# projects and populate the vector database with structured, searchable data.
+**Goal**: Extract all code elements (method calls, method definitions, classes, properties, fields, etc.) from C# projects and populate the vector database with structured, searchable data.
 
 **Owner**: Katie (with AI assistance)  
 **Prerequisites**: CSharpSimpleVector library available, .NET 9 SDK installed  
 **Deliverables**: `CodeAnalyzer.Roslyn` assembly, working analyzer, populated vector store, console test harness
+
+**Current Status**: Phase 1.1-1.8 completed for method call relationships. **EXPANSION NEEDED** to support all code elements.
 
 ---
 
@@ -297,7 +299,76 @@
 
 ---
 
-## Success Criteria for Phase 1
+## Phase 1 Expansion: Support All Code Elements
+
+**Current Limitation**: The system only stores method call relationships, making it impossible to search for method definitions, classes, properties, fields, etc.
+
+**Required Expansion**: Extend the system to extract and store all C# code elements, not just method calls.
+
+### **Phase 1A: Method Definitions** ⏱️ *2 hours* 🔄 **PENDING**
+**Goal**: Add support for method definitions to enable searching for method declarations
+
+- [ ] Create `MethodDefinitionInfo` model with properties:
+  - [ ] `MethodName` (string) - method name
+  - [ ] `ClassName` (string) - containing class
+  - [ ] `Namespace` (string) - namespace
+  - [ ] `ReturnType` (string) - return type
+  - [ ] `Parameters` (List<string>) - parameter types
+  - [ ] `AccessModifier` (string) - public, private, etc.
+  - [ ] `IsStatic` (bool) - static method flag
+  - [ ] `FilePath` (string) - source file path
+  - [ ] `LineNumber` (int) - line number of definition
+
+- [ ] Add `ExtractMethodDefinitions(SyntaxTree tree, SemanticModel model)` method
+- [ ] Update `AnalysisResult` to include `MethodDefinitions` list
+- [ ] Update vector store to store method definitions with content:
+  ```
+  "Method {methodName} in class {className} defined in namespace {namespace}. 
+   This method returns {returnType} and is defined in file {filePath} at line {lineNumber}."
+  ```
+- [ ] Update REPL to show method definitions in analysis results
+- [ ] Add tests for method definition extraction
+
+### **Phase 1B: Class Definitions** ⏱️ *1.5 hours* 🔄 **PENDING**
+**Goal**: Add support for class definitions
+
+- [ ] Create `ClassDefinitionInfo` model
+- [ ] Add `ExtractClassDefinitions()` method
+- [ ] Store class definitions in vector store
+- [ ] Add tests
+
+### **Phase 1C: Properties & Fields** ⏱️ *1.5 hours* 🔄 **PENDING**
+**Goal**: Add support for properties and fields
+
+- [ ] Create `PropertyDefinitionInfo` and `FieldDefinitionInfo` models
+- [ ] Add extraction methods
+- [ ] Store in vector store
+- [ ] Add tests
+
+### **Phase 1D: Interfaces, Structs, Enums** ⏱️ *2 hours* 🔄 **PENDING**
+**Goal**: Complete support for all C# element types
+
+- [ ] Create models for interfaces, structs, enums
+- [ ] Add extraction methods
+- [ ] Store in vector store
+- [ ] Add comprehensive tests
+
+### **Updated Success Criteria for Full Phase 1**
+
+- [x] **Method call relationships** extracted and stored ✅
+- [ ] **Method definitions** extracted and stored
+- [ ] **Class definitions** extracted and stored  
+- [ ] **Property definitions** extracted and stored
+- [ ] **Field definitions** extracted and stored
+- [ ] **Interface definitions** extracted and stored
+- [ ] **Struct definitions** extracted and stored
+- [ ] **Enum definitions** extracted and stored
+- [ ] **Can search for any code element** by name or functionality
+- [ ] **Vector store contains all element types** with correct metadata
+
+---
+
+## Success Criteria for Phase 1 (Original Scope)
 
 - [x] **Analyzer can load a .csproj file** and resolve all references
 - [x] **Semantic model successfully resolves** method calls across files

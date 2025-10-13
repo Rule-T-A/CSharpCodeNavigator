@@ -174,7 +174,7 @@ public class RoslynAnalyzer
     /// <summary>
     /// Create a Roslyn Compilation for a C# project using MSBuildWorkspace.
     /// </summary>
-    /// <param name="projectPath">Path to a .csproj file</param>
+    /// <param name="projectPath">Path to a .csproj file or directory containing a .csproj file</param>
     /// <returns>Compilation with all syntax trees and references loaded</returns>
     public async Task<Compilation> CreateCompilationAsync(string projectPath)
     {
@@ -187,8 +187,28 @@ public class RoslynAnalyzer
             MSBuildLocator.RegisterDefaults();
         }
 
+        // Handle directory paths by finding the .csproj file
+        string actualProjectPath = projectPath;
+        if (Directory.Exists(projectPath))
+        {
+            var csprojFiles = Directory.GetFiles(projectPath, "*.csproj");
+            if (csprojFiles.Length == 0)
+            {
+                throw new FileNotFoundException($"No .csproj file found in directory: {projectPath}");
+            }
+            if (csprojFiles.Length > 1)
+            {
+                throw new InvalidOperationException($"Multiple .csproj files found in directory: {projectPath}. Please specify the exact project file.");
+            }
+            actualProjectPath = csprojFiles[0];
+        }
+        else if (!File.Exists(projectPath))
+        {
+            throw new FileNotFoundException($"Project file not found: {projectPath}");
+        }
+
         using var workspace = MSBuildWorkspace.Create();
-        var project = await workspace.OpenProjectAsync(projectPath).ConfigureAwait(false);
+        var project = await workspace.OpenProjectAsync(actualProjectPath).ConfigureAwait(false);
         var compilation = await project.GetCompilationAsync().ConfigureAwait(false);
         if (compilation == null)
             throw new InvalidOperationException("Failed to create compilation for project");
