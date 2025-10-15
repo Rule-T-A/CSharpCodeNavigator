@@ -12,6 +12,16 @@ public class AnalysisResult
     public List<MethodCallInfo> MethodCalls { get; set; } = new();
 
     /// <summary>
+    /// All method definitions discovered during analysis
+    /// </summary>
+    public List<MethodDefinitionInfo> MethodDefinitions { get; set; } = new();
+
+    /// <summary>
+    /// All class definitions discovered during analysis
+    /// </summary>
+    public List<ClassDefinitionInfo> ClassDefinitions { get; set; } = new();
+
+    /// <summary>
     /// Number of methods that were analyzed
     /// </summary>
     public int MethodsAnalyzed { get; set; }
@@ -30,6 +40,16 @@ public class AnalysisResult
     /// Total number of method call relationships found
     /// </summary>
     public int MethodCallCount => MethodCalls.Count;
+
+    /// <summary>
+    /// Total number of method definitions found
+    /// </summary>
+    public int MethodDefinitionCount => MethodDefinitions.Count;
+
+    /// <summary>
+    /// Total number of class definitions found
+    /// </summary>
+    public int ClassDefinitionCount => ClassDefinitions.Count;
 
     /// <summary>
     /// Whether the analysis completed successfully (no errors)
@@ -53,6 +73,8 @@ public class AnalysisResult
         List<string> errors)
     {
         MethodCalls = methodCalls ?? new List<MethodCallInfo>();
+        MethodDefinitions = new List<MethodDefinitionInfo>();
+        ClassDefinitions = new List<ClassDefinitionInfo>();
         MethodsAnalyzed = methodsAnalyzed;
         FilesProcessed = filesProcessed;
         Errors = errors ?? new List<string>();
@@ -66,6 +88,28 @@ public class AnalysisResult
         if (methodCall != null)
         {
             MethodCalls.Add(methodCall);
+        }
+    }
+
+    /// <summary>
+    /// Adds a method definition to the results
+    /// </summary>
+    public void AddMethodDefinition(MethodDefinitionInfo methodDefinition)
+    {
+        if (methodDefinition != null)
+        {
+            MethodDefinitions.Add(methodDefinition);
+        }
+    }
+
+    /// <summary>
+    /// Adds a class definition to the results
+    /// </summary>
+    public void AddClassDefinition(ClassDefinitionInfo classDefinition)
+    {
+        if (classDefinition != null)
+        {
+            ClassDefinitions.Add(classDefinition);
         }
     }
 
@@ -100,6 +144,8 @@ public class AnalysisResult
     public override string ToString()
     {
         return $"Analysis Result: {MethodCallCount} method calls found, " +
+               $"{MethodDefinitionCount} method definitions found, " +
+               $"{ClassDefinitionCount} class definitions found, " +
                $"{MethodsAnalyzed} methods analyzed, " +
                $"{FilesProcessed} files processed, " +
                $"{Errors.Count} errors";

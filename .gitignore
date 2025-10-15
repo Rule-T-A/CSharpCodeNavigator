@@ -353,3 +353,4 @@ FodyWeavers.xsd
 # VectorStore specific
 *.vectordb
 *.index
+/vector-store

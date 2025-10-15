@@ -311,7 +311,7 @@ class Program
             
             if (_verbosity >= VerbosityLevel.Terse)
             {
-                System.Console.WriteLine($"Analysis complete! Files: {result.FilesProcessed}, Methods: {result.MethodsAnalyzed}, Calls: {result.MethodCalls.Count}");
+                System.Console.WriteLine($"Analysis complete! Files: {result.FilesProcessed}, Methods: {result.MethodsAnalyzed}, Calls: {result.MethodCalls.Count}, Definitions: {result.MethodDefinitions.Count}, Classes: {result.ClassDefinitions.Count}");
             }
             
             if (_verbosity >= VerbosityLevel.Normal)
@@ -320,6 +320,8 @@ class Program
                 System.Console.WriteLine($"  Files processed: {result.FilesProcessed}");
                 System.Console.WriteLine($"  Methods analyzed: {result.MethodsAnalyzed}");
                 System.Console.WriteLine($"  Method calls found: {result.MethodCalls.Count}");
+                System.Console.WriteLine($"  Method definitions found: {result.MethodDefinitions.Count}");
+                System.Console.WriteLine($"  Class definitions found: {result.ClassDefinitions.Count}");
                 
                 if (result.Errors.Count > 0)
                 {
@@ -347,6 +349,63 @@ class Program
                     if (result.MethodCalls.Count > 3)
                     {
                         System.Console.WriteLine($"  ... and {result.MethodCalls.Count - 3} more calls");
+                    }
+                }
+
+                // Show sample method definitions
+                if (result.MethodDefinitions.Count > 0)
+                {
+                    System.Console.WriteLine();
+                    System.Console.WriteLine("Sample method definitions:");
+                    foreach (var methodDef in result.MethodDefinitions.Take(3))
+                    {
+                        var parameters = string.Join(", ", methodDef.Parameters);
+                        var modifiers = "";
+                        if (methodDef.IsStatic) modifiers += "static ";
+                        if (methodDef.IsVirtual) modifiers += "virtual ";
+                        if (methodDef.IsAbstract) modifiers += "abstract ";
+                        if (methodDef.IsOverride) modifiers += "override ";
+                        
+                        System.Console.WriteLine($"  {methodDef.AccessModifier} {modifiers.Trim()}{methodDef.ReturnType} {methodDef.MethodName}({parameters})");
+                        System.Console.WriteLine($"    Class: {methodDef.ClassName}, Namespace: {methodDef.Namespace}");
+                        System.Console.WriteLine($"    File: {methodDef.FilePath}:{methodDef.LineNumber}");
+                    }
+                    if (result.MethodDefinitions.Count > 3)
+                    {
+                        System.Console.WriteLine($"  ... and {result.MethodDefinitions.Count - 3} more definitions");
+                    }
+                }
+
+                // Show sample class definitions
+                if (result.ClassDefinitions.Count > 0)
+                {
+                    System.Console.WriteLine();
+                    System.Console.WriteLine("Sample class definitions:");
+                    foreach (var classDef in result.ClassDefinitions.Take(3))
+                    {
+                        var modifiers = "";
+                        if (classDef.IsStatic) modifiers += "static ";
+                        if (classDef.IsAbstract) modifiers += "abstract ";
+                        if (classDef.IsSealed) modifiers += "sealed ";
+                        
+                        var inheritance = "";
+                        if (!string.IsNullOrEmpty(classDef.BaseClass))
+                        {
+                            inheritance += $" : {classDef.BaseClass}";
+                        }
+                        if (classDef.Interfaces.Count > 0)
+                        {
+                            inheritance += (string.IsNullOrEmpty(classDef.BaseClass) ? " : " : ", ") + string.Join(", ", classDef.Interfaces);
+                        }
+                        
+                        System.Console.WriteLine($"  {classDef.AccessModifier} {modifiers.Trim()}{classDef.ClassName}{inheritance}");
+                        System.Console.WriteLine($"    Namespace: {classDef.Namespace}");
+                        System.Console.WriteLine($"    Members: {classDef.MethodCount} methods, {classDef.PropertyCount} properties, {classDef.FieldCount} fields");
+                        System.Console.WriteLine($"    File: {classDef.FilePath}:{classDef.LineNumber}");
+                    }
+                    if (result.ClassDefinitions.Count > 3)
+                    {
+                        System.Console.WriteLine($"  ... and {result.ClassDefinitions.Count - 3} more classes");
                     }
                 }
             }

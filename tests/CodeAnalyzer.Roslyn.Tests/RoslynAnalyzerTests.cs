@@ -147,8 +147,17 @@ public class RoslynAnalyzerTests
 
         // Assert
         Assert.NotEmpty(result.MethodCalls);
-        Assert.True(writer.Writes.Count >= result.MethodCalls.Count);
-        Assert.All(writer.Writes, w => Assert.Equal("method_call", w.metadata["type"].ToString()));
+        Assert.NotEmpty(result.MethodDefinitions);
+        Assert.True(writer.Writes.Count >= result.MethodCalls.Count + result.MethodDefinitions.Count);
+        
+        // Verify we have both method calls and method definitions
+        var methodCalls = writer.Writes.Where(w => w.metadata["type"].ToString() == "method_call").ToList();
+        var methodDefinitions = writer.Writes.Where(w => w.metadata["type"].ToString() == "method_definition").ToList();
+        
+        Assert.NotEmpty(methodCalls);
+        Assert.NotEmpty(methodDefinitions);
+        Assert.Equal(result.MethodCalls.Count, methodCalls.Count);
+        Assert.Equal(result.MethodDefinitions.Count, methodDefinitions.Count);
     }
 
     [Fact]

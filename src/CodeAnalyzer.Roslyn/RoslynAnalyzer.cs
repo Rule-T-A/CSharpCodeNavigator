@@ -56,6 +56,7 @@ public class RoslynAnalyzer
             FilesProcessed = 0,
             MethodsAnalyzed = 0,
             MethodCalls = new List<MethodCallInfo>(),
+            MethodDefinitions = new List<MethodDefinitionInfo>(),
             Errors = new List<string>()
         };
 
@@ -77,12 +78,45 @@ public class RoslynAnalyzer
                 var methods = ExtractMethodDeclarations(tree, model);
                 result.MethodsAnalyzed += methods.Count;
 
+                var methodDefinitions = ExtractMethodDefinitions(tree, model);
+                result.MethodDefinitions.AddRange(methodDefinitions);
+
+                var classDefinitions = ExtractClassDefinitions(tree, model);
+                result.ClassDefinitions.AddRange(classDefinitions);
+
                 var calls = ExtractMethodCalls(tree, model);
                 result.MethodCalls.AddRange(calls);
                 result.FilesProcessed += 1;
 
-                if (_vectorStore != null && calls.Count > 0)
+                if (_vectorStore != null)
                 {
+                    // Store method definitions
+                    foreach (var methodDef in methodDefinitions)
+                    {
+                        try
+                        {
+                            await StoreMethodDefinitionAsync(methodDef).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            result.Errors.Add($"VectorStore write failed for method definition {methodDef.FullyQualifiedName}: {ex.Message}");
+                        }
+                    }
+
+                    // Store class definitions
+                    foreach (var classDef in classDefinitions)
+                    {
+                        try
+                        {
+                            await StoreClassDefinitionAsync(classDef).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            result.Errors.Add($"VectorStore write failed for class definition {classDef.FullyQualifiedName}: {ex.Message}");
+                        }
+                    }
+
+                    // Store method calls
                     foreach (var call in calls)
                     {
                         try
@@ -124,6 +158,8 @@ public class RoslynAnalyzer
             FilesProcessed = 1,
             MethodsAnalyzed = 0,
             MethodCalls = new List<MethodCallInfo>(),
+            MethodDefinitions = new List<MethodDefinitionInfo>(),
+            ClassDefinitions = new List<ClassDefinitionInfo>(),
             Errors = new List<string>()
         };
 
@@ -131,6 +167,12 @@ public class RoslynAnalyzer
         {
             var methods = ExtractMethodDeclarations(tree, model);
             result.MethodsAnalyzed = methods.Count;
+
+            var methodDefinitions = ExtractMethodDefinitions(tree, model);
+            result.MethodDefinitions.AddRange(methodDefinitions);
+
+            var classDefinitions = ExtractClassDefinitions(tree, model);
+            result.ClassDefinitions.AddRange(classDefinitions);
 
             var calls = ExtractMethodCalls(tree, model);
             result.MethodCalls.AddRange(calls);
@@ -143,8 +185,35 @@ public class RoslynAnalyzer
                     result.Errors.Add(d.ToString());
             }
 
-            if (_vectorStore != null && calls.Count > 0)
+            if (_vectorStore != null)
             {
+                // Store method definitions
+                foreach (var methodDef in methodDefinitions)
+                {
+                    try
+                    {
+                        await StoreMethodDefinitionAsync(methodDef).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        result.Errors.Add($"VectorStore write failed for method definition {methodDef.FullyQualifiedName}: {ex.Message}");
+                    }
+                }
+
+                // Store class definitions
+                foreach (var classDef in classDefinitions)
+                {
+                    try
+                    {
+                        await StoreClassDefinitionAsync(classDef).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        result.Errors.Add($"VectorStore write failed for class definition {classDef.FullyQualifiedName}: {ex.Message}");
+                    }
+                }
+
+                // Store method calls
                 foreach (var call in calls)
                 {
                     try
@@ -280,6 +349,123 @@ public class RoslynAnalyzer
     }
 
     /// <summary>
+    /// Extract method definitions from the given syntax tree using the provided semantic model.
+    /// </summary>
+    /// <param name="tree">Syntax tree to scan</param>
+    /// <param name="model">Semantic model associated with the tree</param>
+    /// <returns>List of method definition information</returns>
+    public List<MethodDefinitionInfo> ExtractMethodDefinitions(SyntaxTree tree, SemanticModel model)
+    {
+        if (tree == null) throw new ArgumentNullException(nameof(tree));
+        if (model == null) throw new ArgumentNullException(nameof(model));
+
+        var root = tree.GetRoot();
+        var results = new List<MethodDefinitionInfo>();
+
+        foreach (var methodDecl in root.DescendantNodes().OfType<MethodDeclarationSyntax>())
+        {
+            var symbol = model.GetDeclaredSymbol(methodDecl);
+            if (symbol == null)
+                continue;
+
+            var location = methodDecl.GetLocation().GetLineSpan();
+            var parameters = new List<string>();
+
+            // Extract parameter types
+            foreach (var param in methodDecl.ParameterList.Parameters)
+            {
+                var paramType = param.Type?.ToString() ?? "object";
+                parameters.Add(paramType);
+            }
+
+            // Determine access modifier
+            var accessModifier = GetAccessModifier(methodDecl.Modifiers);
+
+            var methodDef = new MethodDefinitionInfo(
+                methodName: symbol.Name,
+                className: symbol.ContainingType?.Name ?? string.Empty,
+                namespaceName: symbol.ContainingNamespace?.ToDisplayString() ?? string.Empty,
+                fullyQualifiedName: GetFullyQualifiedName(symbol),
+                returnType: methodDecl.ReturnType?.ToString() ?? "void",
+                parameters: parameters,
+                accessModifier: accessModifier,
+                isStatic: symbol.IsStatic,
+                isVirtual: symbol.IsVirtual,
+                isAbstract: symbol.IsAbstract,
+                isOverride: symbol.IsOverride,
+                filePath: location.Path,
+                lineNumber: location.StartLinePosition.Line + 1
+            );
+
+            results.Add(methodDef);
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Extract class definitions from the given syntax tree using the provided semantic model.
+    /// </summary>
+    /// <param name="tree">Syntax tree to scan</param>
+    /// <param name="model">Semantic model associated with the tree</param>
+    /// <returns>List of class definition information</returns>
+    public List<ClassDefinitionInfo> ExtractClassDefinitions(SyntaxTree tree, SemanticModel model)
+    {
+        if (tree == null) throw new ArgumentNullException(nameof(tree));
+        if (model == null) throw new ArgumentNullException(nameof(model));
+
+        var root = tree.GetRoot();
+        var results = new List<ClassDefinitionInfo>();
+
+        foreach (var classDecl in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
+        {
+            var symbol = model.GetDeclaredSymbol(classDecl);
+            if (symbol == null)
+                continue;
+
+            var location = classDecl.GetLocation().GetLineSpan();
+            
+            // Extract base class and interfaces
+            var baseClass = symbol.BaseType?.ToDisplayString() ?? string.Empty;
+            // Don't include System.Object as base class (it's implicit)
+            if (baseClass == "object" || baseClass == "System.Object")
+                baseClass = string.Empty;
+            var interfaces = symbol.Interfaces.Select(i => i.ToDisplayString()).ToList();
+            
+            // Count members (only user-defined methods, not constructors or property accessors)
+            var methodCount = symbol.GetMembers().OfType<IMethodSymbol>()
+                .Where(m => m.MethodKind == MethodKind.Ordinary).Count();
+            var propertyCount = symbol.GetMembers().OfType<IPropertySymbol>().Count();
+            var fieldCount = symbol.GetMembers().OfType<IFieldSymbol>()
+                .Where(f => !f.IsImplicitlyDeclared).Count();
+
+            // Determine access modifier
+            var accessModifier = GetAccessModifier(classDecl.Modifiers);
+
+            var classDef = new ClassDefinitionInfo(
+                className: symbol.Name,
+                namespaceName: symbol.ContainingNamespace?.ToDisplayString() ?? string.Empty,
+                fullyQualifiedName: GetFullyQualifiedName(symbol),
+                accessModifier: accessModifier,
+                isStatic: symbol.IsStatic,
+                isAbstract: symbol.IsAbstract,
+                isSealed: symbol.IsSealed,
+                baseClass: baseClass,
+                interfaces: interfaces,
+                filePath: location.Path,
+                lineNumber: location.StartLinePosition.Line + 1,
+                methodCount: methodCount,
+                propertyCount: propertyCount,
+                fieldCount: fieldCount
+            );
+
+            results.Add(classDef);
+        }
+
+        return results;
+    }
+
+    /// <summary>
     /// Generate fully qualified name for a symbol as Namespace.Class.Method
     /// </summary>
     /// <param name="symbol">Symbol to format</param>
@@ -299,6 +485,26 @@ public class RoslynAnalyzer
             parts.Insert(0, ns.ToDisplayString());
 
         return string.Join('.', parts);
+    }
+
+    /// <summary>
+    /// Extract access modifier from method declaration syntax modifiers.
+    /// </summary>
+    /// <param name="modifiers">Syntax token list containing modifiers</param>
+    /// <returns>Access modifier string (public, private, protected, internal, or private)</returns>
+    private string GetAccessModifier(SyntaxTokenList modifiers)
+    {
+        if (modifiers.Any(m => m.IsKind(SyntaxKind.PublicKeyword)))
+            return "public";
+        if (modifiers.Any(m => m.IsKind(SyntaxKind.ProtectedKeyword)))
+            return "protected";
+        if (modifiers.Any(m => m.IsKind(SyntaxKind.InternalKeyword)))
+            return "internal";
+        if (modifiers.Any(m => m.IsKind(SyntaxKind.PrivateKeyword)))
+            return "private";
+        
+        // Default to private if no access modifier is specified
+        return "private";
     }
 
     /// <summary>
@@ -599,6 +805,75 @@ public class RoslynAnalyzer
             ["callee_namespace"] = validationResult.NormalizedCall.CalleeNamespace,
             ["file_path"] = validationResult.NormalizedCall.FilePath,
             ["line_number"] = validationResult.NormalizedCall.LineNumber
+        };
+
+        await _vectorStore.AddTextAsync(content, metadata).ConfigureAwait(false);
+    }
+
+    private async Task StoreMethodDefinitionAsync(MethodDefinitionInfo methodDef)
+    {
+        if (_vectorStore == null)
+            return;
+
+        var parametersStr = string.Join(", ", methodDef.Parameters);
+        var staticStr = methodDef.IsStatic ? "static " : "";
+        var virtualStr = methodDef.IsVirtual ? "virtual " : "";
+        var abstractStr = methodDef.IsAbstract ? "abstract " : "";
+        var overrideStr = methodDef.IsOverride ? "override " : "";
+
+        var content = $"Method {methodDef.MethodName} in class {methodDef.ClassName} defined in namespace {methodDef.Namespace}. " +
+                     $"This method returns {methodDef.ReturnType} and is defined in file {methodDef.FilePath} at line {methodDef.LineNumber}. " +
+                     $"Access modifier: {methodDef.AccessModifier}, Parameters: ({parametersStr}), " +
+                     $"Modifiers: {staticStr}{virtualStr}{abstractStr}{overrideStr}".TrimEnd();
+
+        var metadata = new Dictionary<string, object>
+        {
+            ["type"] = "method_definition",
+            ["method"] = methodDef.FullyQualifiedName,
+            ["method_name"] = methodDef.MethodName,
+            ["class"] = methodDef.ClassName,
+            ["namespace"] = methodDef.Namespace,
+            ["return_type"] = methodDef.ReturnType,
+            ["parameters"] = parametersStr,
+            ["access_modifier"] = methodDef.AccessModifier,
+            ["is_static"] = methodDef.IsStatic,
+            ["is_virtual"] = methodDef.IsVirtual,
+            ["is_abstract"] = methodDef.IsAbstract,
+            ["is_override"] = methodDef.IsOverride,
+            ["file_path"] = methodDef.FilePath,
+            ["line_number"] = methodDef.LineNumber
+        };
+
+        await _vectorStore.AddTextAsync(content, metadata).ConfigureAwait(false);
+    }
+
+    private async Task StoreClassDefinitionAsync(ClassDefinitionInfo classDef)
+    {
+        if (_vectorStore == null)
+            return;
+
+        var content = $"Class {classDef.ClassName} defined in namespace {classDef.Namespace}. " +
+                     $"This is a {classDef.AccessModifier} class with {classDef.MethodCount} methods, " +
+                     $"{classDef.PropertyCount} properties, and {classDef.FieldCount} fields. " +
+                     $"Defined in file {classDef.FilePath} at line {classDef.LineNumber}.";
+
+        var metadata = new Dictionary<string, object>
+        {
+            ["type"] = "class_definition",
+            ["class"] = classDef.FullyQualifiedName,
+            ["class_name"] = classDef.ClassName,
+            ["namespace"] = classDef.Namespace,
+            ["access_modifier"] = classDef.AccessModifier,
+            ["is_static"] = classDef.IsStatic,
+            ["is_abstract"] = classDef.IsAbstract,
+            ["is_sealed"] = classDef.IsSealed,
+            ["base_class"] = classDef.BaseClass,
+            ["interfaces"] = string.Join(", ", classDef.Interfaces),
+            ["method_count"] = classDef.MethodCount,
+            ["property_count"] = classDef.PropertyCount,
+            ["field_count"] = classDef.FieldCount,
+            ["file_path"] = classDef.FilePath,
+            ["line_number"] = classDef.LineNumber
         };
 
         await _vectorStore.AddTextAsync(content, metadata).ConfigureAwait(false);

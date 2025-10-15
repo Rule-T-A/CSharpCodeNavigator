@@ -13,11 +13,17 @@ public class AnalysisResultTests
         // Assert
         Assert.NotNull(result.MethodCalls);
         Assert.Empty(result.MethodCalls);
+        Assert.NotNull(result.MethodDefinitions);
+        Assert.Empty(result.MethodDefinitions);
+        Assert.NotNull(result.ClassDefinitions);
+        Assert.Empty(result.ClassDefinitions);
         Assert.Equal(0, result.MethodsAnalyzed);
         Assert.Equal(0, result.FilesProcessed);
         Assert.NotNull(result.Errors);
         Assert.Empty(result.Errors);
         Assert.Equal(0, result.MethodCallCount);
+        Assert.Equal(0, result.MethodDefinitionCount);
+        Assert.Equal(0, result.ClassDefinitionCount);
         Assert.True(result.IsSuccessful);
     }
 
@@ -37,10 +43,16 @@ public class AnalysisResultTests
 
         // Assert
         Assert.Equal(methodCalls, result.MethodCalls);
+        Assert.NotNull(result.MethodDefinitions);
+        Assert.Empty(result.MethodDefinitions);
+        Assert.NotNull(result.ClassDefinitions);
+        Assert.Empty(result.ClassDefinitions);
         Assert.Equal(5, result.MethodsAnalyzed);
         Assert.Equal(3, result.FilesProcessed);
         Assert.Equal(errors, result.Errors);
         Assert.Equal(2, result.MethodCallCount);
+        Assert.Equal(0, result.MethodDefinitionCount);
+        Assert.Equal(0, result.ClassDefinitionCount);
         Assert.False(result.IsSuccessful);
     }
 
@@ -58,6 +70,82 @@ public class AnalysisResultTests
         Assert.Single(result.MethodCalls);
         Assert.Equal(methodCall, result.MethodCalls[0]);
         Assert.Equal(1, result.MethodCallCount);
+    }
+
+    [Fact]
+    public void AddMethodDefinition_ValidDefinition_AddsToMethodDefinitions()
+    {
+        // Arrange
+        var result = new AnalysisResult();
+        var methodDef = new MethodDefinitionInfo(
+            methodName: "TestMethod",
+            className: "TestClass",
+            namespaceName: "TestNamespace",
+            fullyQualifiedName: "TestNamespace.TestClass.TestMethod",
+            returnType: "string",
+            parameters: new List<string> { "int" },
+            accessModifier: "public",
+            isStatic: false,
+            isVirtual: false,
+            isAbstract: false,
+            isOverride: false,
+            filePath: "TestClass.cs",
+            lineNumber: 42
+        );
+
+        // Act
+        result.AddMethodDefinition(methodDef);
+
+        // Assert
+        Assert.Single(result.MethodDefinitions);
+        Assert.Equal(methodDef, result.MethodDefinitions[0]);
+        Assert.Equal(1, result.MethodDefinitionCount);
+    }
+
+    [Fact]
+    public void AddMethodDefinition_NullDefinition_DoesNotAdd()
+    {
+        // Arrange
+        var result = new AnalysisResult();
+
+        // Act
+        result.AddMethodDefinition(null!);
+
+        // Assert
+        Assert.Empty(result.MethodDefinitions);
+        Assert.Equal(0, result.MethodDefinitionCount);
+    }
+
+    [Fact]
+    public void AddClassDefinition_ValidDefinition_AddsToClassDefinitions()
+    {
+        // Arrange
+        var result = new AnalysisResult();
+        var classDef = new ClassDefinitionInfo(
+            "TestClass", "TestNamespace", "TestNamespace.TestClass", "public",
+            false, false, false, "", new List<string>(), "TestFile.cs", 10, 5, 3, 2);
+
+        // Act
+        result.AddClassDefinition(classDef);
+
+        // Assert
+        Assert.Single(result.ClassDefinitions);
+        Assert.Equal(classDef, result.ClassDefinitions[0]);
+        Assert.Equal(1, result.ClassDefinitionCount);
+    }
+
+    [Fact]
+    public void AddClassDefinition_NullDefinition_DoesNotAdd()
+    {
+        // Arrange
+        var result = new AnalysisResult();
+
+        // Act
+        result.AddClassDefinition(null!);
+
+        // Assert
+        Assert.Empty(result.ClassDefinitions);
+        Assert.Equal(0, result.ClassDefinitionCount);
     }
 
     [Fact]
@@ -177,6 +265,37 @@ public class AnalysisResultTests
         result.MethodsAnalyzed = 10;
         result.FilesProcessed = 5;
         result.AddMethodCall(new MethodCallInfo("Caller", "Callee", "CallerClass", "CalleeClass", "CallerNs", "CalleeNs", "file.cs", 1));
+        result.AddMethodDefinition(new MethodDefinitionInfo(
+            methodName: "TestMethod",
+            className: "TestClass",
+            namespaceName: "TestNamespace",
+            fullyQualifiedName: "TestNamespace.TestClass.TestMethod",
+            returnType: "string",
+            parameters: new List<string>(),
+            accessModifier: "public",
+            isStatic: false,
+            isVirtual: false,
+            isAbstract: false,
+            isOverride: false,
+            filePath: "TestClass.cs",
+            lineNumber: 42
+        ));
+        result.AddClassDefinition(new ClassDefinitionInfo(
+            className: "TestClass",
+            namespaceName: "TestNamespace",
+            fullyQualifiedName: "TestNamespace.TestClass",
+            accessModifier: "public",
+            isStatic: false,
+            isAbstract: false,
+            isSealed: false,
+            baseClass: "",
+            interfaces: new List<string>(),
+            filePath: "TestClass.cs",
+            lineNumber: 1,
+            methodCount: 5,
+            propertyCount: 3,
+            fieldCount: 2
+        ));
         result.AddError("Test error");
 
         // Act
@@ -184,6 +303,8 @@ public class AnalysisResultTests
 
         // Assert
         Assert.Contains("1 method calls found", resultString);
+        Assert.Contains("1 method definitions found", resultString);
+        Assert.Contains("1 class definitions found", resultString);
         Assert.Contains("10 methods analyzed", resultString);
         Assert.Contains("5 files processed", resultString);
         Assert.Contains("1 errors", resultString);
