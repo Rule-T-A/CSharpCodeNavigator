@@ -564,7 +564,480 @@
 - REPL console interface with help system
 - Real vector store integration via adapter pattern
 
-**Next Phase**: Phase 2 - Call Index Builder (builds on Phase 1 results)
+**Next Phase**: Phase 1.9 - REST API (can be started after Phase 1.1-1.8 complete), then Phase 2 - Call Index Builder
+
+---
+
+## Phase 1.9: REST API Implementation
+
+**Owner**: AI Agent (with Katie's review)  
+**Prerequisites**: Phase 1.1-1.8 completed (method calls, method definitions, class definitions extraction working)  
+**Deliverables**: REST API server, tool endpoints, resource endpoints, comprehensive test suite  
+**Estimated Time**: 8-10 hours
+
+**Goal**: Create a REST API that exposes code analysis capabilities for agent use. The API should be MCP-compatible and provide composable primitives for agents to answer questions about codebases.
+
+**Current Status**: 🔄 **PENDING** - Ready to start after Phase 1.1-1.8 completion
+
+---
+
+### **Step 1.9.1: Project Setup & Dependencies** ⏱️ *30 minutes*
+
+**Goal**: Create API project and add required dependencies
+
+- [ ] Create new project `CodeAnalyzer.Api`:
+  - [ ] Add to solution
+  - [ ] Target .NET 9
+  - [ ] Add project reference to `CodeAnalyzer.Roslyn`
+  - [ ] Add project reference to `CodeAnalyzer.Navigation` (if exists, otherwise will be placeholder)
+
+- [ ] Add NuGet packages:
+  - [ ] `Microsoft.AspNetCore.App` (for ASP.NET Core)
+  - [ ] `Microsoft.AspNetCore.OpenApi` (for OpenAPI/Swagger)
+  - [ ] `System.Text.Json` (if not included)
+
+- [ ] Create basic project structure:
+  - [ ] `Controllers/` folder
+  - [ ] `Models/` folder (for API request/response models)
+  - [ ] `Services/` folder (for business logic)
+  - [ ] `Program.cs` with minimal setup
+
+- [ ] Write initial test:
+  - [ ] Test that API project builds
+  - [ ] Test that server can start (minimal health check)
+
+- [ ] Verify project builds and basic server starts
+
+**📁 Files Created**:
+- `src/CodeAnalyzer.Api/CodeAnalyzer.Api.csproj`
+- `src/CodeAnalyzer.Api/Program.cs`
+- `tests/CodeAnalyzer.Api.Tests/CodeAnalyzer.Api.Tests.csproj`
+
+---
+
+### **Step 1.9.2: Project Management Service** ⏱️ *1 hour*
+
+**Goal**: Create service layer for managing projects and their vector stores
+
+- [ ] Create `IProjectManager` interface:
+  - [ ] `Task<string> IndexProjectAsync(string projectPath, string? projectName)`
+  - [ ] `Task<ProjectStatus> GetProjectStatusAsync(string projectId)`
+  - [ ] `Task<List<ProjectInfo>> ListProjectsAsync()`
+  - [ ] `Task<bool> DeleteProjectAsync(string projectId)`
+
+- [ ] Create `ProjectManager` implementation:
+  - [ ] Store project metadata (in-memory dictionary for now, can persist later)
+  - [ ] Manage vector store paths per project
+  - [ ] Track analysis jobs and status
+  - [ ] Integrate with `RoslynAnalyzer` for indexing
+
+- [ ] Create models:
+  - [ ] `ProjectInfo` - project metadata
+  - [ ] `ProjectStatus` - analysis status and progress
+  - [ ] `IndexProjectRequest` - request model
+  - [ ] `IndexProjectResponse` - response model
+
+- [ ] Write tests:
+  - [ ] Test project indexing starts successfully
+  - [ ] Test project status retrieval
+  - [ ] Test project listing
+  - [ ] Test project deletion
+  - [ ] Test error handling (invalid paths, etc.)
+
+- [ ] Verify all tests pass
+
+**📁 Files Created**:
+- `src/CodeAnalyzer.Api/Services/IProjectManager.cs`
+- `src/CodeAnalyzer.Api/Services/ProjectManager.cs`
+- `src/CodeAnalyzer.Api/Models/ProjectInfo.cs`
+- `src/CodeAnalyzer.Api/Models/ProjectStatus.cs`
+- `src/CodeAnalyzer.Api/Models/IndexProjectRequest.cs`
+- `src/CodeAnalyzer.Api/Models/IndexProjectResponse.cs`
+- `tests/CodeAnalyzer.Api.Tests/Services/ProjectManagerTests.cs`
+
+---
+
+### **Step 1.9.3: Enumeration Tools** ⏱️ *1.5 hours*
+
+**Goal**: Implement tools for discovering code elements (list_classes, list_methods, list_entry_points)
+
+- [ ] Create `IEnumerationService` interface:
+  - [ ] `Task<ClassListResponse> ListClassesAsync(string projectId, string? namespace, int limit, int offset)`
+  - [ ] `Task<MethodListResponse> ListMethodsAsync(string projectId, string? className, string? namespace, int limit, int offset)`
+  - [ ] `Task<EntryPointListResponse> ListEntryPointsAsync(string projectId, string? type)`
+
+- [ ] Create `EnumerationService` implementation:
+  - [ ] Load vector store for project
+  - [ ] Query vector store for class definitions (metadata type: "class_definition")
+  - [ ] Query vector store for method definitions (metadata type: "method_definition")
+  - [ ] Filter and paginate results
+  - [ ] Detect entry points (Main methods, controllers with [HttpPost]/[HttpGet] attributes)
+
+- [ ] Create response models:
+  - [ ] `ClassListResponse` with pagination
+  - [ ] `MethodListResponse` with pagination
+  - [ ] `EntryPointListResponse`
+  - [ ] `ClassInfo`, `MethodInfo`, `EntryPointInfo`
+
+- [ ] Write tests:
+  - [ ] Test listing classes with no filters
+  - [ ] Test listing classes with namespace filter
+  - [ ] Test listing classes with pagination
+  - [ ] Test listing methods with class filter
+  - [ ] Test listing methods with namespace filter
+  - [ ] Test listing entry points
+  - [ ] Test error handling (project not found, etc.)
+
+- [ ] Verify all tests pass
+
+**📁 Files Created**:
+- `src/CodeAnalyzer.Api/Services/IEnumerationService.cs`
+- `src/CodeAnalyzer.Api/Services/EnumerationService.cs`
+- `src/CodeAnalyzer.Api/Models/ClassListResponse.cs`
+- `src/CodeAnalyzer.Api/Models/MethodListResponse.cs`
+- `src/CodeAnalyzer.Api/Models/EntryPointListResponse.cs`
+- `tests/CodeAnalyzer.Api.Tests/Services/EnumerationServiceTests.cs`
+
+---
+
+### **Step 1.9.4: Code Element Detail Tools** ⏱️ *1 hour*
+
+**Goal**: Implement tools for getting detailed information about methods and classes
+
+- [ ] Create `ICodeElementService` interface:
+  - [ ] `Task<MethodDetailResponse> GetMethodAsync(string projectId, string methodFqn)`
+  - [ ] `Task<ClassDetailResponse> GetClassAsync(string projectId, string classFqn)`
+  - [ ] `Task<ClassMethodsResponse> GetClassMethodsAsync(string projectId, string classFqn)`
+
+- [ ] Create `CodeElementService` implementation:
+  - [ ] Load vector store for project
+  - [ ] Query vector store for method/class definitions by FQN
+  - [ ] Extract metadata and format response
+  - [ ] Handle not found cases
+
+- [ ] Create response models:
+  - [ ] `MethodDetailResponse`
+  - [ ] `ClassDetailResponse`
+  - [ ] `ClassMethodsResponse`
+
+- [ ] Write tests:
+  - [ ] Test getting method by FQN
+  - [ ] Test getting class by FQN
+  - [ ] Test getting class methods
+  - [ ] Test error handling (method not found, class not found)
+
+- [ ] Verify all tests pass
+
+**📁 Files Created**:
+- `src/CodeAnalyzer.Api/Services/ICodeElementService.cs`
+- `src/CodeAnalyzer.Api/Services/CodeElementService.cs`
+- `src/CodeAnalyzer.Api/Models/MethodDetailResponse.cs`
+- `src/CodeAnalyzer.Api/Models/ClassDetailResponse.cs`
+- `src/CodeAnalyzer.Api/Models/ClassMethodsResponse.cs`
+- `tests/CodeAnalyzer.Api.Tests/Services/CodeElementServiceTests.cs`
+
+---
+
+### **Step 1.9.5: Relationship Traversal Tools** ⏱️ *2 hours*
+
+**Goal**: Implement tools for walking call graphs (get_callers, get_callees, get_class_references)
+
+- [ ] Create `IRelationshipService` interface:
+  - [ ] `Task<CallersResponse> GetCallersAsync(string projectId, string methodFqn, int depth, bool includeSelf)`
+  - [ ] `Task<CalleesResponse> GetCalleesAsync(string projectId, string methodFqn, int depth, bool includeSelf)`
+  - [ ] `Task<ClassReferencesResponse> GetClassReferencesAsync(string projectId, string classFqn, string? relationshipType)`
+
+- [ ] Create `RelationshipService` implementation:
+  - [ ] Load vector store for project
+  - [ ] Query method_call metadata for callers (where callee = methodFqn)
+  - [ ] Query method_call metadata for callees (where caller = methodFqn)
+  - [ ] Implement depth traversal (recursive or iterative)
+  - [ ] For class references: find classes that call methods in target class
+  - [ ] Format results with depth information
+
+- [ ] Create response models:
+  - [ ] `CallersResponse` with caller list and depth info
+  - [ ] `CalleesResponse` with callee list and depth info
+  - [ ] `ClassReferencesResponse` with reference list
+  - [ ] `CallerInfo`, `CalleeInfo`, `ClassReferenceInfo`
+
+- [ ] Write tests:
+  - [ ] Test getting direct callers (depth=1)
+  - [ ] Test getting direct callees (depth=1)
+  - [ ] Test depth traversal (depth=2, depth=3)
+  - [ ] Test include_self flag
+  - [ ] Test getting class references
+  - [ ] Test error handling (method not found, circular references)
+
+- [ ] Verify all tests pass
+
+**📁 Files Created**:
+- `src/CodeAnalyzer.Api/Services/IRelationshipService.cs`
+- `src/CodeAnalyzer.Api/Services/RelationshipService.cs`
+- `src/CodeAnalyzer.Api/Models/CallersResponse.cs`
+- `src/CodeAnalyzer.Api/Models/CalleesResponse.cs`
+- `src/CodeAnalyzer.Api/Models/ClassReferencesResponse.cs`
+- `tests/CodeAnalyzer.Api.Tests/Services/RelationshipServiceTests.cs`
+
+**Note**: This step may need to be updated once Phase 2 (Call Index) is implemented for better performance.
+
+---
+
+### **Step 1.9.6: Search Tool** ⏱️ *1 hour*
+
+**Goal**: Implement semantic search capability
+
+- [ ] Create `ISearchService` interface:
+  - [ ] `Task<SearchResponse> SearchCodeAsync(string projectId, string query, int limit, string[]? types, double? minSimilarity)`
+
+- [ ] Create `SearchService` implementation:
+  - [ ] Load vector store for project
+  - [ ] Use `vectorStore.SearchTextAsync(query, limit)`
+  - [ ] Filter by element types if specified
+  - [ ] Filter by similarity threshold
+  - [ ] Format results with similarity scores
+
+- [ ] Create response models:
+  - [ ] `SearchResponse` with results list
+  - [ ] `SearchResult` with element info and similarity
+
+- [ ] Write tests:
+  - [ ] Test basic semantic search
+  - [ ] Test search with type filter
+  - [ ] Test search with similarity threshold
+  - [ ] Test search with limit
+  - [ ] Test empty results
+
+- [ ] Verify all tests pass
+
+**📁 Files Created**:
+- `src/CodeAnalyzer.Api/Services/ISearchService.cs`
+- `src/CodeAnalyzer.Api/Services/SearchService.cs`
+- `src/CodeAnalyzer.Api/Models/SearchResponse.cs`
+- `tests/CodeAnalyzer.Api.Tests/Services/SearchServiceTests.cs`
+
+---
+
+### **Step 1.9.7: Tool Controllers** ⏱️ *1.5 hours*
+
+**Goal**: Create ASP.NET Core controllers for all tool endpoints
+
+- [ ] Create `ToolsController`:
+  - [ ] `POST /api/tools/index_project` → calls ProjectManager
+  - [ ] `POST /api/tools/list_projects` → calls ProjectManager
+  - [ ] `POST /api/tools/list_classes` → calls EnumerationService
+  - [ ] `POST /api/tools/list_methods` → calls EnumerationService
+  - [ ] `POST /api/tools/list_entry_points` → calls EnumerationService
+  - [ ] `POST /api/tools/get_method` → calls CodeElementService
+  - [ ] `POST /api/tools/get_class` → calls CodeElementService
+  - [ ] `POST /api/tools/get_class_methods` → calls CodeElementService
+  - [ ] `POST /api/tools/get_callers` → calls RelationshipService
+  - [ ] `POST /api/tools/get_callees` → calls RelationshipService
+  - [ ] `POST /api/tools/get_class_references` → calls RelationshipService
+  - [ ] `POST /api/tools/search_code` → calls SearchService
+  - [ ] `POST /api/tools/get_project_status` → calls ProjectManager
+
+- [ ] Implement request validation:
+  - [ ] Validate required parameters
+  - [ ] Validate project_id exists
+  - [ ] Return appropriate error responses
+
+- [ ] Implement error handling:
+  - [ ] Catch exceptions and return proper error responses
+  - [ ] Use consistent error format from API spec
+
+- [ ] Write integration tests:
+  - [ ] Test each endpoint with valid requests
+  - [ ] Test each endpoint with invalid requests
+  - [ ] Test error responses
+  - [ ] Test request validation
+
+- [ ] Verify all tests pass
+
+**📁 Files Created**:
+- `src/CodeAnalyzer.Api/Controllers/ToolsController.cs`
+- `tests/CodeAnalyzer.Api.Tests/Controllers/ToolsControllerTests.cs`
+
+---
+
+### **Step 1.9.8: Resource Endpoints** ⏱️ *30 minutes*
+
+**Goal**: Create GET endpoints for resources (read-only data access)
+
+- [ ] Create `ResourcesController`:
+  - [ ] `GET /api/resources/project/{projectId}` → returns project status
+  - [ ] `GET /api/resources/method/{projectId}/{methodFqn}` → returns method details
+  - [ ] `GET /api/resources/class/{projectId}/{classFqn}` → returns class details
+
+- [ ] Implement URL decoding for FQNs in routes
+- [ ] Add caching headers (optional, for future optimization)
+
+- [ ] Write tests:
+  - [ ] Test each resource endpoint
+  - [ ] Test URL encoding/decoding
+  - [ ] Test 404 responses
+
+- [ ] Verify all tests pass
+
+**📁 Files Created**:
+- `src/CodeAnalyzer.Api/Controllers/ResourcesController.cs`
+- `tests/CodeAnalyzer.Api.Tests/Controllers/ResourcesControllerTests.cs`
+
+---
+
+### **Step 1.9.9: Tool Discovery & OpenAPI** ⏱️ *1 hour*
+
+**Goal**: Add tool discovery endpoint and OpenAPI/Swagger documentation
+
+- [ ] Create `GET /api/tools` endpoint:
+  - [ ] Returns list of all available tools
+  - [ ] Includes tool name, description, and input schema
+  - [ ] Matches MCP tool registration format
+
+- [ ] Configure Swagger/OpenAPI:
+  - [ ] Add Swagger UI
+  - [ ] Configure API documentation
+  - [ ] Add XML comments to controllers/models
+
+- [ ] Write tests:
+  - [ ] Test tool discovery endpoint returns all tools
+  - [ ] Test tool schemas are valid JSON Schema
+
+- [ ] Verify Swagger UI works and shows all endpoints
+
+**📁 Files Created**:
+- `src/CodeAnalyzer.Api/Controllers/ToolsController.cs` (add discovery endpoint)
+- `src/CodeAnalyzer.Api/Models/ToolDefinition.cs`
+- Swagger configuration in `Program.cs`
+
+---
+
+### **Step 1.9.10: Error Handling & Validation** ⏱️ *1 hour*
+
+**Goal**: Implement comprehensive error handling and request validation
+
+- [ ] Create global error handler middleware:
+  - [ ] Catch unhandled exceptions
+  - [ ] Format errors according to API spec
+  - [ ] Log errors appropriately
+
+- [ ] Create custom exception types:
+  - [ ] `ProjectNotFoundException`
+  - [ ] `MethodNotFoundException`
+  - [ ] `ClassNotFoundException`
+  - [ ] `InvalidParameterException`
+
+- [ ] Add request validation:
+  - [ ] Use data annotations on request models
+  - [ ] Validate FQN formats
+  - [ ] Validate depth parameters (must be > 0)
+  - [ ] Validate limit/offset (must be >= 0)
+
+- [ ] Write tests:
+  - [ ] Test error responses match API spec format
+  - [ ] Test all error codes
+  - [ ] Test validation errors
+
+- [ ] Verify all error cases handled correctly
+
+**📁 Files Created**:
+- `src/CodeAnalyzer.Api/Middleware/ErrorHandlingMiddleware.cs`
+- `src/CodeAnalyzer.Api/Exceptions/ProjectNotFoundException.cs`
+- `src/CodeAnalyzer.Api/Exceptions/MethodNotFoundException.cs`
+- `src/CodeAnalyzer.Api/Exceptions/ClassNotFoundException.cs`
+- `src/CodeAnalyzer.Api/Exceptions/InvalidParameterException.cs`
+- `tests/CodeAnalyzer.Api.Tests/Middleware/ErrorHandlingMiddlewareTests.cs`
+
+---
+
+### **Step 1.9.11: Integration Testing** ⏱️ *1 hour*
+
+**Goal**: Create end-to-end integration tests
+
+- [ ] Create test project setup:
+  - [ ] Sample C# project for testing
+  - [ ] Test vector store setup
+  - [ ] Test data preparation
+
+- [ ] Write integration tests:
+  - [ ] Test full workflow: index project → query methods → get relationships
+  - [ ] Test multiple projects
+  - [ ] Test concurrent requests
+  - [ ] Test error scenarios end-to-end
+
+- [ ] Performance testing:
+  - [ ] Test response times are acceptable (< 2 seconds for most operations)
+  - [ ] Test pagination works for large result sets
+
+- [ ] Verify all integration tests pass
+
+**📁 Files Created**:
+- `tests/CodeAnalyzer.Api.Tests/Integration/ApiIntegrationTests.cs`
+- `tests/CodeAnalyzer.Api.Tests/TestData/` (sample projects)
+
+---
+
+### **Step 1.9.12: Documentation & Finalization** ⏱️ *30 minutes*
+
+**Goal**: Finalize API implementation and documentation
+
+- [ ] Update API_SPEC.md with any deviations or clarifications
+- [ ] Add XML documentation comments to all public APIs
+- [ ] Verify all endpoints match API spec
+- [ ] Test API with sample agent workflow (manual testing)
+- [ ] Update README.md with API usage instructions
+- [ ] Create example requests/responses
+
+- [ ] Final verification:
+  - [ ] All tests pass
+  - [ ] API builds without warnings
+  - [ ] Swagger UI shows all endpoints correctly
+  - [ ] Error responses match spec
+
+**📁 Files Updated**:
+- `API_SPEC.md` (if needed)
+- `README.md`
+- `src/CodeAnalyzer.Api/` (XML comments)
+
+---
+
+## Success Criteria for Phase 1.9
+
+- [ ] All tool endpoints implemented and working
+- [ ] All resource endpoints implemented and working
+- [ ] Tool discovery endpoint returns complete tool list
+- [ ] Error handling matches API spec
+- [ ] All tests pass (unit + integration)
+- [ ] Swagger UI functional and complete
+- [ ] API can be used by agents to answer questions about codebases
+- [ ] Performance is acceptable (< 2 seconds for most operations)
+
+---
+
+## Dependencies & Notes
+
+**Dependencies**:
+- Phase 1.1-1.8 must be complete (method calls, method definitions, class definitions)
+- Vector store must be working
+- RoslynAnalyzer must be functional
+
+**Future Enhancements** (can be added later):
+- Phase 2 (Call Index) integration for better performance on relationship queries
+- Authentication/authorization
+- Rate limiting
+- Caching layer
+- WebSocket support for real-time updates
+- Batch operation endpoints
+
+**Performance Considerations**:
+- Initial implementation uses vector store queries directly
+- Once Phase 2 (Call Index) is complete, can optimize relationship queries
+- Pagination is important for large projects
+- Consider caching frequently accessed resources
+
+---
+
+**Next Phase**: Phase 2 - Call Index Builder (can be done in parallel or after API)
 
 ---
 
