@@ -560,6 +560,113 @@ Semantic search for code elements using natural language.
 
 ---
 
+### Tool: `diff_project`
+
+Compare the current codebase with the stored database to find differences.
+
+**Endpoint**: `POST /api/tools/diff_project`
+
+**Request Body**:
+```json
+{
+  "project_id": "uuid",
+  "types": ["methods", "classes", "method_calls"],  // optional: filter by element type (default: all)
+  "include_details": true  // optional: include full details of diff items (default: true)
+}
+```
+
+**Response**:
+```json
+{
+  "project_id": "uuid",
+  "summary": {
+    "method_calls": {
+      "in_code_not_in_db": 5,
+      "in_db_not_in_code": 3,
+      "total_in_code": 1250,
+      "total_in_db": 1248
+    },
+    "method_definitions": {
+      "in_code_not_in_db": 2,
+      "in_db_not_in_code": 1,
+      "total_in_code": 450,
+      "total_in_db": 449
+    },
+    "class_definitions": {
+      "in_code_not_in_db": 1,
+      "in_db_not_in_code": 0,
+      "total_in_code": 120,
+      "total_in_db": 120
+    }
+  },
+  "differences": {
+    "method_calls": {
+      "missing": [
+        {
+          "caller": "MyApp.Services.UserService.ValidateUser",
+          "callee": "MyApp.Data.UserRepository.FindUser",
+          "file_path": "Services/UserService.cs",
+          "line_number": 45
+        }
+      ],
+      "extra": [
+        {
+          "caller": "MyApp.Services.OldService.DeprecatedMethod",
+          "callee": "MyApp.Data.OldRepository.GetData",
+          "file_path": "Services/OldService.cs",
+          "line_number": 12
+        }
+      ]
+    },
+    "method_definitions": {
+      "missing": [
+        {
+          "fully_qualified_name": "MyApp.Services.UserService.NewMethod",
+          "name": "NewMethod",
+          "class_name": "UserService",
+          "namespace": "MyApp.Services",
+          "file_path": "Services/UserService.cs",
+          "line_number": 100
+        }
+      ],
+      "extra": [
+        {
+          "fully_qualified_name": "MyApp.Services.OldService.DeprecatedMethod",
+          "name": "DeprecatedMethod",
+          "class_name": "OldService",
+          "namespace": "MyApp.Services",
+          "file_path": "Services/OldService.cs",
+          "line_number": 12
+        }
+      ]
+    },
+    "class_definitions": {
+      "missing": [
+        {
+          "fully_qualified_name": "MyApp.Services.NewService",
+          "name": "NewService",
+          "namespace": "MyApp.Services",
+          "file_path": "Services/NewService.cs",
+          "line_number": 10
+        }
+      ],
+      "extra": []
+    }
+  }
+}
+```
+
+**Notes**:
+- Re-analyzes the current codebase to establish ground truth
+- Compares with stored data in the database
+- `missing` items are in the current code but not in the database (need to be added)
+- `extra` items are in the database but not in the current code (stale, can be removed)
+- Use `types` to filter which element types to compare
+- Set `include_details: false` to get only counts without full item details
+- This is useful for detecting code changes that haven't been indexed yet
+
+---
+
 ### Tool: `get_project_status`
 
 Get project analysis status and statistics.
@@ -704,7 +811,27 @@ List all available tools with their schemas (for MCP tool registration).
 
 ## Agent Workflow Examples
 
-### Example 1: "Who calls this method and who does it call?"
+### Example 1: "What has changed in the codebase since the last index?"
+
+**Agent Workflow**:
+1. Call `diff_project` to compare current code with stored database
+2. Review `missing` items (new code that needs indexing)
+3. Review `extra` items (stale code that was removed)
+4. Optionally call `index_project` to update the database
+
+**API Calls**:
+```json
+POST /api/tools/diff_project
+{
+  "project_id": "abc123",
+  "types": ["methods", "classes", "method_calls"],
+  "include_details": true
+}
+```
+
+---
+
+### Example 2: "Who calls this method and who does it call?"
 
 **Agent Workflow**:
 1. Call `get_callers` with `depth: 1` to get direct callers
@@ -730,7 +857,7 @@ POST /api/tools/get_callees
 
 ---
 
-### Example 2: "Where in the UI does a method get called?"
+### Example 3: "Where in the UI does a method get called?"
 
 **Agent Workflow**:
 1. Call `list_entry_points` to get all UI entry points
@@ -757,7 +884,7 @@ POST /api/tools/get_callees
 
 ---
 
-### Example 3: "Is this used in the code, or is it orphaned?"
+### Example 4: "Is this used in the code, or is it orphaned?"
 
 **Agent Workflow**:
 1. Call `get_callers` with `depth: 1`
@@ -782,7 +909,7 @@ POST /api/tools/list_entry_points
 
 ---
 
-### Example 4: "Find all orphaned pieces of code"
+### Example 5: "Find all orphaned pieces of code"
 
 **Agent Workflow**:
 1. Call `list_methods` to get all methods (with pagination)
@@ -811,7 +938,7 @@ POST /api/tools/get_callers
 
 ---
 
-### Example 5: "Walk up the entire call tree to find all entry points"
+### Example 6: "Walk up the entire call tree to find all entry points"
 
 **Agent Workflow**:
 1. Start with target method
