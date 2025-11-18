@@ -7,7 +7,7 @@
 **Prerequisites**: CSharpSimpleVector library available, .NET 9 SDK installed  
 **Deliverables**: `CodeAnalyzer.Roslyn` assembly, working analyzer, populated vector store, console test harness
 
-**Current Status**: Phase 1.1-1.8 completed for method call relationships. **Phase 1A-1F (All Code Elements) COMPLETED**. **Phase 1.9 (REST API) IN PROGRESS** - Steps 1.9.1-1.9.2 completed.
+**Current Status**: Phase 1.1-1.8 completed for method call relationships. **Phase 1A-1F (All Code Elements) COMPLETED**. **Phase 1.9 (REST API) IN PROGRESS** - Steps 1.9.1-1.9.3 completed.
 
 ---
 
@@ -614,12 +614,14 @@
 - **Phase 1F**: Integration & Testing
 - **Phase 1.9.1**: REST API project setup and dependencies
 - **Phase 1.9.2**: Project Management Service
+- **Phase 1.9.3**: Enumeration Tools
 
 **📊 Test Coverage:**
-- **222 tests passing** (100% success rate)
+- **233 tests passing** (100% success rate)
   - 206 tests from Phase 1.1-1.8 and expansions
   - 2 tests from API project setup
   - 14 tests from Project Management Service
+  - 11 tests from Enumeration Service
 - Comprehensive unit tests for all models
 - Integration tests for extraction methods
 - Vector store integration tests
@@ -633,8 +635,9 @@
 - REST API project with ASP.NET Core and Swagger
 - Project management service with async indexing
 - Status tracking and vector store management
+- Enumeration service for discovering code elements
 
-**Next Phase**: Phase 1.9.3 - Enumeration Tools, then remaining API steps
+**Next Phase**: Phase 1.9.4 - Code Element Detail Tools, then remaining API steps
 
 ---
 
@@ -647,7 +650,7 @@
 
 **Goal**: Create a REST API that exposes code analysis capabilities for agent use. The API should be MCP-compatible and provide composable primitives for agents to answer questions about codebases.
 
-**Current Status**: 🔄 **IN PROGRESS** - Steps 1.9.1-1.9.2 completed
+**Current Status**: 🔄 **IN PROGRESS** - Steps 1.9.1-1.9.3 completed
 
 ---
 
@@ -743,46 +746,61 @@
 
 ---
 
-### **Step 1.9.3: Enumeration Tools** ⏱️ *1.5 hours*
+### **Step 1.9.3: Enumeration Tools** ⏱️ *1.5 hours* ✅ **COMPLETED**
 
 **Goal**: Implement tools for discovering code elements (list_classes, list_methods, list_entry_points)
 
-- [ ] Create `IEnumerationService` interface:
-  - [ ] `Task<ClassListResponse> ListClassesAsync(string projectId, string? namespace, int limit, int offset)`
-  - [ ] `Task<MethodListResponse> ListMethodsAsync(string projectId, string? className, string? namespace, int limit, int offset)`
-  - [ ] `Task<EntryPointListResponse> ListEntryPointsAsync(string projectId, string? type)`
+- [x] Create `IEnumerationService` interface:
+  - [x] `Task<ClassListResponse> ListClassesAsync(string projectId, string? namespace, int limit, int offset)`
+  - [x] `Task<MethodListResponse> ListMethodsAsync(string projectId, string? className, string? namespace, int limit, int offset)`
+  - [x] `Task<EntryPointListResponse> ListEntryPointsAsync(string projectId, string? type)`
 
-- [ ] Create `EnumerationService` implementation:
-  - [ ] Load vector store for project
-  - [ ] Query vector store for class definitions (metadata type: "class_definition")
-  - [ ] Query vector store for method definitions (metadata type: "method_definition")
-  - [ ] Filter and paginate results
-  - [ ] Detect entry points (Main methods, controllers with [HttpPost]/[HttpGet] attributes)
+- [x] Create `EnumerationService` implementation:
+  - [x] Load vector store for project
+  - [x] Query vector store for class definitions (metadata type: "class_definition")
+  - [x] Query vector store for method definitions (metadata type: "method_definition")
+  - [x] Filter and paginate results
+  - [x] Detect entry points (Main methods, controllers with [HttpPost]/[HttpGet] attributes)
 
-- [ ] Create response models:
-  - [ ] `ClassListResponse` with pagination
-  - [ ] `MethodListResponse` with pagination
-  - [ ] `EntryPointListResponse`
-  - [ ] `ClassInfo`, `MethodInfo`, `EntryPointInfo`
+- [x] Create response models:
+  - [x] `ClassListResponse` with pagination
+  - [x] `MethodListResponse` with pagination
+  - [x] `EntryPointListResponse`
+  - [x] `ClassInfo`, `MethodInfo`, `EntryPointInfo`
 
-- [ ] Write tests:
-  - [ ] Test listing classes with no filters
-  - [ ] Test listing classes with namespace filter
-  - [ ] Test listing classes with pagination
-  - [ ] Test listing methods with class filter
-  - [ ] Test listing methods with namespace filter
-  - [ ] Test listing entry points
-  - [ ] Test error handling (project not found, etc.)
+- [x] Write tests:
+  - [x] Test listing classes with no filters
+  - [x] Test listing classes with namespace filter
+  - [x] Test listing classes with pagination
+  - [x] Test listing methods with class filter
+  - [x] Test listing methods with namespace filter
+  - [x] Test listing entry points
+  - [x] Test error handling (project not found, etc.)
 
-- [ ] Verify all tests pass
+- [x] Verify all tests pass
+
+**✅ Results**: Enumeration service successfully implemented with vector store querying, filtering, pagination, and entry point detection. 11 tests passing (100% success rate).
 
 **📁 Files Created**:
 - `src/CodeAnalyzer.Api/Services/IEnumerationService.cs`
 - `src/CodeAnalyzer.Api/Services/EnumerationService.cs`
+- `src/CodeAnalyzer.Api/Models/ClassInfo.cs`
+- `src/CodeAnalyzer.Api/Models/MethodInfo.cs`
+- `src/CodeAnalyzer.Api/Models/EntryPointInfo.cs`
 - `src/CodeAnalyzer.Api/Models/ClassListResponse.cs`
 - `src/CodeAnalyzer.Api/Models/MethodListResponse.cs`
 - `src/CodeAnalyzer.Api/Models/EntryPointListResponse.cs`
 - `tests/CodeAnalyzer.Api.Tests/Services/EnumerationServiceTests.cs`
+
+**🔧 Technical Details**:
+- Vector store querying via `FileVectorStoreAdapter` with proper disposal
+- Metadata-based filtering (type: "class_definition", "method_definition")
+- Namespace filtering for classes and methods
+- Class name filtering for methods
+- Pagination support with limit and offset
+- Entry point detection for Main methods and Controller classes
+- Integration with `IProjectManager` for project access
+- Comprehensive error handling for invalid project IDs
 
 ---
 
