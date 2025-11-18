@@ -7,7 +7,7 @@
 **Prerequisites**: CSharpSimpleVector library available, .NET 9 SDK installed  
 **Deliverables**: `CodeAnalyzer.Roslyn` assembly, working analyzer, populated vector store, console test harness
 
-**Current Status**: Phase 1.1-1.8 completed for method call relationships. **Phase 1A (Method Definitions) and Phase 1B (Class Definitions) COMPLETED**. Expansion continues for remaining code elements.
+**Current Status**: Phase 1.1-1.8 completed for method call relationships. **Phase 1A-1F (All Code Elements) COMPLETED**. **Phase 1.9 (REST API) IN PROGRESS** - Steps 1.9.1-1.9.2 completed.
 
 ---
 
@@ -612,20 +612,29 @@
 - **Phase 1D**: Enum definitions extraction and storage
 - **Phase 1E**: Interfaces & Structs extraction and storage
 - **Phase 1F**: Integration & Testing
+- **Phase 1.9.1**: REST API project setup and dependencies
+- **Phase 1.9.2**: Project Management Service
 
 **📊 Test Coverage:**
-- **206 tests passing** (100% success rate)
+- **222 tests passing** (100% success rate)
+  - 206 tests from Phase 1.1-1.8 and expansions
+  - 2 tests from API project setup
+  - 14 tests from Project Management Service
 - Comprehensive unit tests for all models
 - Integration tests for extraction methods
 - Vector store integration tests
 - Console application end-to-end testing
+- API service layer testing
 
 **🔧 Technical Achievements:**
 - Comprehensive error handling
 - REPL console interface with help system
 - Real vector store integration via adapter pattern
+- REST API project with ASP.NET Core and Swagger
+- Project management service with async indexing
+- Status tracking and vector store management
 
-**Next Phase**: Phase 1.9 - REST API (can be started after Phase 1.1-1.8 complete), then Phase 2 - Call Index Builder
+**Next Phase**: Phase 1.9.3 - Enumeration Tools, then remaining API steps
 
 ---
 
@@ -638,74 +647,82 @@
 
 **Goal**: Create a REST API that exposes code analysis capabilities for agent use. The API should be MCP-compatible and provide composable primitives for agents to answer questions about codebases.
 
-**Current Status**: 🔄 **PENDING** - Ready to start after Phase 1.1-1.8 completion
+**Current Status**: 🔄 **IN PROGRESS** - Steps 1.9.1-1.9.2 completed
 
 ---
 
-### **Step 1.9.1: Project Setup & Dependencies** ⏱️ *30 minutes*
+### **Step 1.9.1: Project Setup & Dependencies** ⏱️ *30 minutes* ✅ **COMPLETED**
 
 **Goal**: Create API project and add required dependencies
 
-- [ ] Create new project `CodeAnalyzer.Api`:
-  - [ ] Add to solution
-  - [ ] Target .NET 9
-  - [ ] Add project reference to `CodeAnalyzer.Roslyn`
-  - [ ] Add project reference to `CodeAnalyzer.Navigation` (if exists, otherwise will be placeholder)
+- [x] Create new project `CodeAnalyzer.Api`:
+  - [x] Add to solution
+  - [x] Target .NET 9
+  - [x] Add project reference to `CodeAnalyzer.Roslyn`
+  - [x] Add project reference to `CodeAnalyzer.Navigation`
 
-- [ ] Add NuGet packages:
-  - [ ] `Microsoft.AspNetCore.App` (for ASP.NET Core)
-  - [ ] `Microsoft.AspNetCore.OpenApi` (for OpenAPI/Swagger)
-  - [ ] `System.Text.Json` (if not included)
+- [x] Add NuGet packages:
+  - [x] `Microsoft.AspNetCore.OpenApi` (for OpenAPI/Swagger)
+  - [x] `Swashbuckle.AspNetCore` (for Swagger UI)
+  - [x] `VectorStore` (for vector store integration)
+  - [x] `Microsoft.Extensions.Logging.Abstractions` (for logging)
 
-- [ ] Create basic project structure:
-  - [ ] `Controllers/` folder
-  - [ ] `Models/` folder (for API request/response models)
-  - [ ] `Services/` folder (for business logic)
-  - [ ] `Program.cs` with minimal setup
+- [x] Create basic project structure:
+  - [x] `Controllers/` folder
+  - [x] `Models/` folder (for API request/response models)
+  - [x] `Services/` folder (for business logic)
+  - [x] `Program.cs` with minimal setup
 
-- [ ] Write initial test:
-  - [ ] Test that API project builds
-  - [ ] Test that server can start (minimal health check)
+- [x] Write initial tests:
+  - [x] Test that API project builds
+  - [x] Test that server can start (minimal health check)
 
-- [ ] Verify project builds and basic server starts
+- [x] Verify project builds and basic server starts
+
+**✅ Results**: API project successfully created with ASP.NET Core setup. 2 tests passing, Swagger UI configured.
 
 **📁 Files Created**:
 - `src/CodeAnalyzer.Api/CodeAnalyzer.Api.csproj`
 - `src/CodeAnalyzer.Api/Program.cs`
 - `tests/CodeAnalyzer.Api.Tests/CodeAnalyzer.Api.Tests.csproj`
+- `tests/CodeAnalyzer.Api.Tests/ProjectSetupTests.cs`
 
 ---
 
-### **Step 1.9.2: Project Management Service** ⏱️ *1 hour*
+### **Step 1.9.2: Project Management Service** ⏱️ *1 hour* ✅ **COMPLETED**
 
 **Goal**: Create service layer for managing projects and their vector stores
 
-- [ ] Create `IProjectManager` interface:
-  - [ ] `Task<string> IndexProjectAsync(string projectPath, string? projectName)`
-  - [ ] `Task<ProjectStatus> GetProjectStatusAsync(string projectId)`
-  - [ ] `Task<List<ProjectInfo>> ListProjectsAsync()`
-  - [ ] `Task<bool> DeleteProjectAsync(string projectId)`
+- [x] Create `IProjectManager` interface:
+  - [x] `Task<string> IndexProjectAsync(string projectPath, string? projectName)`
+  - [x] `Task<ProjectStatus> GetProjectStatusAsync(string projectId)`
+  - [x] `Task<List<ProjectInfo>> ListProjectsAsync()`
+  - [x] `Task<bool> DeleteProjectAsync(string projectId)`
 
-- [ ] Create `ProjectManager` implementation:
-  - [ ] Store project metadata (in-memory dictionary for now, can persist later)
-  - [ ] Manage vector store paths per project
-  - [ ] Track analysis jobs and status
-  - [ ] Integrate with `RoslynAnalyzer` for indexing
+- [x] Create `ProjectManager` implementation:
+  - [x] Store project metadata (in-memory dictionary for now, can persist later)
+  - [x] Manage vector store paths per project
+  - [x] Track analysis jobs and status
+  - [x] Integrate with `RoslynAnalyzer` for indexing
 
-- [ ] Create models:
-  - [ ] `ProjectInfo` - project metadata
-  - [ ] `ProjectStatus` - analysis status and progress
-  - [ ] `IndexProjectRequest` - request model
-  - [ ] `IndexProjectResponse` - response model
+- [x] Create models:
+  - [x] `ProjectInfo` - project metadata
+  - [x] `ProjectStatus` - analysis status and progress (with `IndexingStatus` enum)
+  - [x] `IndexProjectRequest` - request model
+  - [x] `IndexProjectResponse` - response model
 
-- [ ] Write tests:
-  - [ ] Test project indexing starts successfully
-  - [ ] Test project status retrieval
-  - [ ] Test project listing
-  - [ ] Test project deletion
-  - [ ] Test error handling (invalid paths, etc.)
+- [x] Write tests:
+  - [x] Test project indexing starts successfully
+  - [x] Test project status retrieval
+  - [x] Test project listing
+  - [x] Test project deletion
+  - [x] Test error handling (invalid paths, etc.)
+  - [x] Test duplicate project handling
+  - [x] Test status updates during indexing
 
-- [ ] Verify all tests pass
+- [x] Verify all tests pass
+
+**✅ Results**: Project management service successfully implemented with async indexing, status tracking, and vector store integration. 14 tests passing (100% success rate).
 
 **📁 Files Created**:
 - `src/CodeAnalyzer.Api/Services/IProjectManager.cs`
@@ -715,6 +732,14 @@
 - `src/CodeAnalyzer.Api/Models/IndexProjectRequest.cs`
 - `src/CodeAnalyzer.Api/Models/IndexProjectResponse.cs`
 - `tests/CodeAnalyzer.Api.Tests/Services/ProjectManagerTests.cs`
+
+**🔧 Technical Details**:
+- In-memory project storage with dictionary-based tracking
+- Async background indexing using `Task.Run`
+- Per-project vector store management
+- Status tracking with `IndexingStatus` enum (Queued, Indexing, Completed, Failed, NotIndexed)
+- Comprehensive error handling and logging support
+- Project ID generation based on project path hash
 
 ---
 
