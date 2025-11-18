@@ -616,14 +616,16 @@
 - **Phase 1.9.2**: Project Management Service
 - **Phase 1.9.3**: Enumeration Tools
 - **Phase 1.9.4**: Code Element Detail Tools
+- **Phase 1.9.5**: Relationship Traversal Tools
 
 **📊 Test Coverage:**
-- **248 tests passing** (100% success rate)
+- **268 tests passing** (100% success rate)
   - 206 tests from Phase 1.1-1.8 and expansions
   - 2 tests from API project setup
   - 14 tests from Project Management Service
   - 11 tests from Enumeration Service
   - 15 tests from Code Element Detail Service
+  - 20 tests from Relationship Service
 - Comprehensive unit tests for all models
 - Integration tests for extraction methods
 - Vector store integration tests
@@ -638,8 +640,9 @@
 - Project management service with async indexing
 - Status tracking and vector store management
 - Enumeration service for discovering code elements
+- Relationship traversal service with depth traversal and circular reference prevention
 
-**Next Phase**: Phase 1.9.5 - Relationship Traversal Tools, then remaining API steps
+**Next Phase**: Phase 1.9.6 - Search Tool, then remaining API steps
 
 ---
 
@@ -652,7 +655,7 @@
 
 **Goal**: Create a REST API that exposes code analysis capabilities for agent use. The API should be MCP-compatible and provide composable primitives for agents to answer questions about codebases.
 
-**Current Status**: 🔄 **IN PROGRESS** - Steps 1.9.1-1.9.4 completed
+**Current Status**: 🔄 **IN PROGRESS** - Steps 1.9.1-1.9.5 completed
 
 ---
 
@@ -853,46 +856,60 @@
 
 ---
 
-### **Step 1.9.5: Relationship Traversal Tools** ⏱️ *2 hours*
+### **Step 1.9.5: Relationship Traversal Tools** ⏱️ *2 hours* ✅ **COMPLETED**
 
 **Goal**: Implement tools for walking call graphs (get_callers, get_callees, get_class_references)
 
-- [ ] Create `IRelationshipService` interface:
-  - [ ] `Task<CallersResponse> GetCallersAsync(string projectId, string methodFqn, int depth, bool includeSelf)`
-  - [ ] `Task<CalleesResponse> GetCalleesAsync(string projectId, string methodFqn, int depth, bool includeSelf)`
-  - [ ] `Task<ClassReferencesResponse> GetClassReferencesAsync(string projectId, string classFqn, string? relationshipType)`
+- [x] Create `IRelationshipService` interface:
+  - [x] `Task<CallersResponse> GetCallersAsync(string projectId, string methodFqn, int depth, bool includeSelf)`
+  - [x] `Task<CalleesResponse> GetCalleesAsync(string projectId, string methodFqn, int depth, bool includeSelf)`
+  - [x] `Task<ClassReferencesResponse> GetClassReferencesAsync(string projectId, string classFqn, string? relationshipType)`
 
-- [ ] Create `RelationshipService` implementation:
-  - [ ] Load vector store for project
-  - [ ] Query method_call metadata for callers (where callee = methodFqn)
-  - [ ] Query method_call metadata for callees (where caller = methodFqn)
-  - [ ] Implement depth traversal (recursive or iterative)
-  - [ ] For class references: find classes that call methods in target class
-  - [ ] Format results with depth information
+- [x] Create `RelationshipService` implementation:
+  - [x] Load vector store for project
+  - [x] Query method_call metadata for callers (where callee = methodFqn)
+  - [x] Query method_call metadata for callees (where caller = methodFqn)
+  - [x] Implement depth traversal (level-by-level BFS with visited tracking)
+  - [x] For class references: find classes that call methods in target class
+  - [x] Format results with depth information
 
-- [ ] Create response models:
-  - [ ] `CallersResponse` with caller list and depth info
-  - [ ] `CalleesResponse` with callee list and depth info
-  - [ ] `ClassReferencesResponse` with reference list
-  - [ ] `CallerInfo`, `CalleeInfo`, `ClassReferenceInfo`
+- [x] Create response models:
+  - [x] `CallersResponse` with caller list and depth info
+  - [x] `CalleesResponse` with callee list and depth info
+  - [x] `ClassReferencesResponse` with reference list
+  - [x] `CallerInfo`, `CalleeInfo`, `ClassReferenceInfo`
 
-- [ ] Write tests:
-  - [ ] Test getting direct callers (depth=1)
-  - [ ] Test getting direct callees (depth=1)
-  - [ ] Test depth traversal (depth=2, depth=3)
-  - [ ] Test include_self flag
-  - [ ] Test getting class references
-  - [ ] Test error handling (method not found, circular references)
+- [x] Write tests:
+  - [x] Test getting direct callers (depth=1)
+  - [x] Test getting direct callees (depth=1)
+  - [x] Test depth traversal (depth=2, depth=3)
+  - [x] Test include_self flag
+  - [x] Test getting class references
+  - [x] Test error handling (method not found, circular references)
 
-- [ ] Verify all tests pass
+- [x] Verify all tests pass
+
+**✅ Results**: Relationship service successfully implemented with depth traversal, circular reference prevention, and comprehensive error handling. 20 tests passing (100% success rate).
 
 **📁 Files Created**:
-- `src/CodeAnalyzer.Api/Services/IRelationshipService.cs`
-- `src/CodeAnalyzer.Api/Services/RelationshipService.cs`
-- `src/CodeAnalyzer.Api/Models/CallersResponse.cs`
-- `src/CodeAnalyzer.Api/Models/CalleesResponse.cs`
-- `src/CodeAnalyzer.Api/Models/ClassReferencesResponse.cs`
-- `tests/CodeAnalyzer.Api.Tests/Services/RelationshipServiceTests.cs`
+- `src/CodeAnalyzer.Api/Services/IRelationshipService.cs` - Service interface
+- `src/CodeAnalyzer.Api/Services/RelationshipService.cs` - Service implementation with BFS traversal
+- `src/CodeAnalyzer.Api/Models/CallerInfo.cs` - Caller information model
+- `src/CodeAnalyzer.Api/Models/CalleeInfo.cs` - Callee information model
+- `src/CodeAnalyzer.Api/Models/ClassReferenceInfo.cs` - Class reference information model
+- `src/CodeAnalyzer.Api/Models/CallersResponse.cs` - Callers response model
+- `src/CodeAnalyzer.Api/Models/CalleesResponse.cs` - Callees response model
+- `src/CodeAnalyzer.Api/Models/ClassReferencesResponse.cs` - Class references response model
+- `tests/CodeAnalyzer.Api.Tests/Services/RelationshipServiceTests.cs` - 20 comprehensive tests
+
+**🔧 Technical Details**:
+- Level-by-level BFS traversal for efficient depth traversal
+- Visited tracking to prevent infinite loops from circular references
+- `includeSelf` flag support for including method itself at depth 0
+- Class reference detection by finding classes that call methods in target class
+- Relationship type filtering for class references
+- Comprehensive error handling for invalid project IDs, empty FQNs, invalid depth, and not found cases
+- Integration with `IProjectManager` for project access
 
 **Note**: This step may need to be updated once Phase 2 (Call Index) is implemented for better performance.
 
