@@ -22,6 +22,31 @@ public class AnalysisResult
     public List<ClassDefinitionInfo> ClassDefinitions { get; set; } = new();
 
     /// <summary>
+    /// All property definitions discovered during analysis
+    /// </summary>
+    public List<PropertyDefinitionInfo> PropertyDefinitions { get; set; } = new();
+
+    /// <summary>
+    /// All field definitions discovered during analysis
+    /// </summary>
+    public List<FieldDefinitionInfo> FieldDefinitions { get; set; } = new();
+
+    /// <summary>
+    /// All enum definitions discovered during analysis
+    /// </summary>
+    public List<EnumDefinitionInfo> EnumDefinitions { get; set; } = new();
+
+    /// <summary>
+    /// All interface definitions discovered during analysis
+    /// </summary>
+    public List<InterfaceDefinitionInfo> InterfaceDefinitions { get; set; } = new();
+
+    /// <summary>
+    /// All struct definitions discovered during analysis
+    /// </summary>
+    public List<StructDefinitionInfo> StructDefinitions { get; set; } = new();
+
+    /// <summary>
     /// Number of methods that were analyzed
     /// </summary>
     public int MethodsAnalyzed { get; set; }
@@ -52,6 +77,31 @@ public class AnalysisResult
     public int ClassDefinitionCount => ClassDefinitions.Count;
 
     /// <summary>
+    /// Total number of property definitions found
+    /// </summary>
+    public int PropertyDefinitionCount => PropertyDefinitions.Count;
+
+    /// <summary>
+    /// Total number of field definitions found
+    /// </summary>
+    public int FieldDefinitionCount => FieldDefinitions.Count;
+
+    /// <summary>
+    /// Total number of enum definitions found
+    /// </summary>
+    public int EnumDefinitionCount => EnumDefinitions.Count;
+
+    /// <summary>
+    /// Total number of interface definitions found
+    /// </summary>
+    public int InterfaceDefinitionCount => InterfaceDefinitions.Count;
+
+    /// <summary>
+    /// Total number of struct definitions found
+    /// </summary>
+    public int StructDefinitionCount => StructDefinitions.Count;
+
+    /// <summary>
     /// Whether the analysis completed successfully (no errors)
     /// </summary>
     public bool IsSuccessful => Errors.Count == 0;
@@ -75,6 +125,11 @@ public class AnalysisResult
         MethodCalls = methodCalls ?? new List<MethodCallInfo>();
         MethodDefinitions = new List<MethodDefinitionInfo>();
         ClassDefinitions = new List<ClassDefinitionInfo>();
+        PropertyDefinitions = new List<PropertyDefinitionInfo>();
+        FieldDefinitions = new List<FieldDefinitionInfo>();
+        EnumDefinitions = new List<EnumDefinitionInfo>();
+        InterfaceDefinitions = new List<InterfaceDefinitionInfo>();
+        StructDefinitions = new List<StructDefinitionInfo>();
         MethodsAnalyzed = methodsAnalyzed;
         FilesProcessed = filesProcessed;
         Errors = errors ?? new List<string>();
@@ -114,6 +169,61 @@ public class AnalysisResult
     }
 
     /// <summary>
+    /// Adds a property definition to the results
+    /// </summary>
+    public void AddPropertyDefinition(PropertyDefinitionInfo propertyDefinition)
+    {
+        if (propertyDefinition != null)
+        {
+            PropertyDefinitions.Add(propertyDefinition);
+        }
+    }
+
+    /// <summary>
+    /// Adds a field definition to the results
+    /// </summary>
+    public void AddFieldDefinition(FieldDefinitionInfo fieldDefinition)
+    {
+        if (fieldDefinition != null)
+        {
+            FieldDefinitions.Add(fieldDefinition);
+        }
+    }
+
+    /// <summary>
+    /// Adds an enum definition to the results
+    /// </summary>
+    public void AddEnumDefinition(EnumDefinitionInfo enumDefinition)
+    {
+        if (enumDefinition != null)
+        {
+            EnumDefinitions.Add(enumDefinition);
+        }
+    }
+
+    /// <summary>
+    /// Adds an interface definition to the results
+    /// </summary>
+    public void AddInterfaceDefinition(InterfaceDefinitionInfo interfaceDefinition)
+    {
+        if (interfaceDefinition != null)
+        {
+            InterfaceDefinitions.Add(interfaceDefinition);
+        }
+    }
+
+    /// <summary>
+    /// Adds a struct definition to the results
+    /// </summary>
+    public void AddStructDefinition(StructDefinitionInfo structDefinition)
+    {
+        if (structDefinition != null)
+        {
+            StructDefinitions.Add(structDefinition);
+        }
+    }
+
+    /// <summary>
     /// Adds an error to the results
     /// </summary>
     public void AddError(string error)
@@ -146,6 +256,11 @@ public class AnalysisResult
         return $"Analysis Result: {MethodCallCount} method calls found, " +
                $"{MethodDefinitionCount} method definitions found, " +
                $"{ClassDefinitionCount} class definitions found, " +
+               $"{PropertyDefinitionCount} property definitions found, " +
+               $"{FieldDefinitionCount} field definitions found, " +
+               $"{EnumDefinitionCount} enum definitions found, " +
+               $"{InterfaceDefinitionCount} interface definitions found, " +
+               $"{StructDefinitionCount} struct definitions found, " +
                $"{MethodsAnalyzed} methods analyzed, " +
                $"{FilesProcessed} files processed, " +
                $"{Errors.Count} errors";

@@ -57,6 +57,12 @@ public class RoslynAnalyzer
             MethodsAnalyzed = 0,
             MethodCalls = new List<MethodCallInfo>(),
             MethodDefinitions = new List<MethodDefinitionInfo>(),
+            ClassDefinitions = new List<ClassDefinitionInfo>(),
+            PropertyDefinitions = new List<PropertyDefinitionInfo>(),
+            FieldDefinitions = new List<FieldDefinitionInfo>(),
+            EnumDefinitions = new List<EnumDefinitionInfo>(),
+            InterfaceDefinitions = new List<InterfaceDefinitionInfo>(),
+            StructDefinitions = new List<StructDefinitionInfo>(),
             Errors = new List<string>()
         };
 
@@ -83,6 +89,21 @@ public class RoslynAnalyzer
 
                 var classDefinitions = ExtractClassDefinitions(tree, model);
                 result.ClassDefinitions.AddRange(classDefinitions);
+
+                var propertyDefinitions = ExtractPropertyDefinitions(tree, model);
+                result.PropertyDefinitions.AddRange(propertyDefinitions);
+
+                var fieldDefinitions = ExtractFieldDefinitions(tree, model);
+                result.FieldDefinitions.AddRange(fieldDefinitions);
+
+                var enumDefinitions = ExtractEnumDefinitions(tree, model);
+                result.EnumDefinitions.AddRange(enumDefinitions);
+
+                var interfaceDefinitions = ExtractInterfaceDefinitions(tree, model);
+                result.InterfaceDefinitions.AddRange(interfaceDefinitions);
+
+                var structDefinitions = ExtractStructDefinitions(tree, model);
+                result.StructDefinitions.AddRange(structDefinitions);
 
                 var calls = ExtractMethodCalls(tree, model);
                 result.MethodCalls.AddRange(calls);
@@ -113,6 +134,71 @@ public class RoslynAnalyzer
                         catch (Exception ex)
                         {
                             result.Errors.Add($"VectorStore write failed for class definition {classDef.FullyQualifiedName}: {ex.Message}");
+                        }
+                    }
+
+                    // Store property definitions
+                    foreach (var propertyDef in propertyDefinitions)
+                    {
+                        try
+                        {
+                            await StorePropertyDefinitionAsync(propertyDef).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            result.Errors.Add($"VectorStore write failed for property definition {propertyDef.FullyQualifiedName}: {ex.Message}");
+                        }
+                    }
+
+                    // Store field definitions
+                    foreach (var fieldDef in fieldDefinitions)
+                    {
+                        try
+                        {
+                            await StoreFieldDefinitionAsync(fieldDef).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            result.Errors.Add($"VectorStore write failed for field definition {fieldDef.FullyQualifiedName}: {ex.Message}");
+                        }
+                    }
+
+                    // Store enum definitions
+                    foreach (var enumDef in enumDefinitions)
+                    {
+                        try
+                        {
+                            await StoreEnumDefinitionAsync(enumDef).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            result.Errors.Add($"VectorStore write failed for enum definition {enumDef.FullyQualifiedName}: {ex.Message}");
+                        }
+                    }
+
+                    // Store interface definitions
+                    foreach (var interfaceDef in interfaceDefinitions)
+                    {
+                        try
+                        {
+                            await StoreInterfaceDefinitionAsync(interfaceDef).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            result.Errors.Add($"VectorStore write failed for interface definition {interfaceDef.FullyQualifiedName}: {ex.Message}");
+                        }
+                    }
+
+                    // Store struct definitions
+                    foreach (var structDef in structDefinitions)
+                    {
+                        try
+                        {
+                            await StoreStructDefinitionAsync(structDef).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            result.Errors.Add($"VectorStore write failed for struct definition {structDef.FullyQualifiedName}: {ex.Message}");
                         }
                     }
 
@@ -160,6 +246,11 @@ public class RoslynAnalyzer
             MethodCalls = new List<MethodCallInfo>(),
             MethodDefinitions = new List<MethodDefinitionInfo>(),
             ClassDefinitions = new List<ClassDefinitionInfo>(),
+            PropertyDefinitions = new List<PropertyDefinitionInfo>(),
+            FieldDefinitions = new List<FieldDefinitionInfo>(),
+            EnumDefinitions = new List<EnumDefinitionInfo>(),
+            InterfaceDefinitions = new List<InterfaceDefinitionInfo>(),
+            StructDefinitions = new List<StructDefinitionInfo>(),
             Errors = new List<string>()
         };
 
@@ -173,6 +264,21 @@ public class RoslynAnalyzer
 
             var classDefinitions = ExtractClassDefinitions(tree, model);
             result.ClassDefinitions.AddRange(classDefinitions);
+
+            var propertyDefinitions = ExtractPropertyDefinitions(tree, model);
+            result.PropertyDefinitions.AddRange(propertyDefinitions);
+
+            var fieldDefinitions = ExtractFieldDefinitions(tree, model);
+            result.FieldDefinitions.AddRange(fieldDefinitions);
+
+            var enumDefinitions = ExtractEnumDefinitions(tree, model);
+            result.EnumDefinitions.AddRange(enumDefinitions);
+
+            var interfaceDefinitions = ExtractInterfaceDefinitions(tree, model);
+            result.InterfaceDefinitions.AddRange(interfaceDefinitions);
+
+            var structDefinitions = ExtractStructDefinitions(tree, model);
+            result.StructDefinitions.AddRange(structDefinitions);
 
             var calls = ExtractMethodCalls(tree, model);
             result.MethodCalls.AddRange(calls);
@@ -210,6 +316,71 @@ public class RoslynAnalyzer
                     catch (Exception ex)
                     {
                         result.Errors.Add($"VectorStore write failed for class definition {classDef.FullyQualifiedName}: {ex.Message}");
+                    }
+                }
+
+                // Store property definitions
+                foreach (var propertyDef in propertyDefinitions)
+                {
+                    try
+                    {
+                        await StorePropertyDefinitionAsync(propertyDef).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        result.Errors.Add($"VectorStore write failed for property definition {propertyDef.FullyQualifiedName}: {ex.Message}");
+                    }
+                }
+
+                // Store field definitions
+                foreach (var fieldDef in fieldDefinitions)
+                {
+                    try
+                    {
+                        await StoreFieldDefinitionAsync(fieldDef).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        result.Errors.Add($"VectorStore write failed for field definition {fieldDef.FullyQualifiedName}: {ex.Message}");
+                    }
+                }
+
+                // Store enum definitions
+                foreach (var enumDef in enumDefinitions)
+                {
+                    try
+                    {
+                        await StoreEnumDefinitionAsync(enumDef).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        result.Errors.Add($"VectorStore write failed for enum definition {enumDef.FullyQualifiedName}: {ex.Message}");
+                    }
+                }
+
+                // Store interface definitions
+                foreach (var interfaceDef in interfaceDefinitions)
+                {
+                    try
+                    {
+                        await StoreInterfaceDefinitionAsync(interfaceDef).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        result.Errors.Add($"VectorStore write failed for interface definition {interfaceDef.FullyQualifiedName}: {ex.Message}");
+                    }
+                }
+
+                // Store struct definitions
+                foreach (var structDef in structDefinitions)
+                {
+                    try
+                    {
+                        await StoreStructDefinitionAsync(structDef).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        result.Errors.Add($"VectorStore write failed for struct definition {structDef.FullyQualifiedName}: {ex.Message}");
                     }
                 }
 
@@ -460,6 +631,342 @@ public class RoslynAnalyzer
             );
 
             results.Add(classDef);
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Extract property definitions from the given syntax tree using the provided semantic model.
+    /// </summary>
+    /// <param name="tree">Syntax tree to scan</param>
+    /// <param name="model">Semantic model associated with the tree</param>
+    /// <returns>List of property definition information</returns>
+    public List<PropertyDefinitionInfo> ExtractPropertyDefinitions(SyntaxTree tree, SemanticModel model)
+    {
+        if (tree == null) throw new ArgumentNullException(nameof(tree));
+        if (model == null) throw new ArgumentNullException(nameof(model));
+
+        var root = tree.GetRoot();
+        var results = new List<PropertyDefinitionInfo>();
+
+        foreach (var propertyDecl in root.DescendantNodes().OfType<PropertyDeclarationSyntax>())
+        {
+            var symbol = model.GetDeclaredSymbol(propertyDecl);
+            if (symbol == null)
+                continue;
+
+            var location = propertyDecl.GetLocation().GetLineSpan();
+
+            // Determine access modifier
+            var accessModifier = GetAccessModifier(propertyDecl.Modifiers);
+
+            // Check for getter and setter
+            var hasGetter = propertyDecl.AccessorList?.Accessors.Any(a => a.IsKind(SyntaxKind.GetAccessorDeclaration)) ?? false;
+            var hasSetter = propertyDecl.AccessorList?.Accessors.Any(a => a.IsKind(SyntaxKind.SetAccessorDeclaration)) ?? false;
+            
+            // Check if auto-property (no accessor body)
+            var isAutoProperty = propertyDecl.AccessorList?.Accessors.All(a => a.Body == null && a.ExpressionBody == null) ?? false;
+
+            var propertyDef = new PropertyDefinitionInfo(
+                propertyName: symbol.Name,
+                className: symbol.ContainingType?.Name ?? string.Empty,
+                namespaceName: symbol.ContainingNamespace?.ToDisplayString() ?? string.Empty,
+                fullyQualifiedName: GetFullyQualifiedName(symbol),
+                propertyType: propertyDecl.Type?.ToString() ?? "object",
+                accessModifier: accessModifier,
+                isStatic: symbol.IsStatic,
+                isVirtual: symbol.IsVirtual,
+                isAbstract: symbol.IsAbstract,
+                isOverride: symbol.IsOverride,
+                hasGetter: hasGetter,
+                hasSetter: hasSetter,
+                isAutoProperty: isAutoProperty,
+                filePath: location.Path,
+                lineNumber: location.StartLinePosition.Line + 1
+            );
+
+            results.Add(propertyDef);
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Extract field definitions from the given syntax tree using the provided semantic model.
+    /// </summary>
+    /// <param name="tree">Syntax tree to scan</param>
+    /// <param name="model">Semantic model associated with the tree</param>
+    /// <returns>List of field definition information</returns>
+    public List<FieldDefinitionInfo> ExtractFieldDefinitions(SyntaxTree tree, SemanticModel model)
+    {
+        if (tree == null) throw new ArgumentNullException(nameof(tree));
+        if (model == null) throw new ArgumentNullException(nameof(model));
+
+        var root = tree.GetRoot();
+        var results = new List<FieldDefinitionInfo>();
+
+        foreach (var fieldDecl in root.DescendantNodes().OfType<FieldDeclarationSyntax>())
+        {
+            var location = fieldDecl.GetLocation().GetLineSpan();
+            
+            // Determine access modifier
+            var accessModifier = GetAccessModifier(fieldDecl.Modifiers);
+
+            // Check modifiers
+            var isStatic = fieldDecl.Modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword));
+            var isReadOnly = fieldDecl.Modifiers.Any(m => m.IsKind(SyntaxKind.ReadOnlyKeyword));
+            var isConst = fieldDecl.Modifiers.Any(m => m.IsKind(SyntaxKind.ConstKeyword));
+            var isVolatile = fieldDecl.Modifiers.Any(m => m.IsKind(SyntaxKind.VolatileKeyword));
+
+            // Process each variable in the field declaration (e.g., "int x, y, z;")
+            foreach (var variable in fieldDecl.Declaration?.Variables ?? Enumerable.Empty<VariableDeclaratorSyntax>())
+            {
+                var symbol = model.GetDeclaredSymbol(variable);
+                if (symbol == null)
+                    continue;
+
+                var fieldDef = new FieldDefinitionInfo(
+                    fieldName: symbol.Name,
+                    className: symbol.ContainingType?.Name ?? string.Empty,
+                    namespaceName: symbol.ContainingNamespace?.ToDisplayString() ?? string.Empty,
+                    fullyQualifiedName: GetFullyQualifiedName(symbol),
+                    fieldType: fieldDecl.Declaration?.Type?.ToString() ?? "object",
+                    accessModifier: accessModifier,
+                    isStatic: isStatic,
+                    isReadOnly: isReadOnly,
+                    isConst: isConst,
+                    isVolatile: isVolatile,
+                    filePath: location.Path,
+                    lineNumber: location.StartLinePosition.Line + 1
+                );
+
+                results.Add(fieldDef);
+            }
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Extract enum definitions from the given syntax tree using the provided semantic model.
+    /// </summary>
+    /// <param name="tree">Syntax tree to scan</param>
+    /// <param name="model">Semantic model associated with the tree</param>
+    /// <returns>List of enum definition information</returns>
+    public List<EnumDefinitionInfo> ExtractEnumDefinitions(SyntaxTree tree, SemanticModel model)
+    {
+        if (tree == null) throw new ArgumentNullException(nameof(tree));
+        if (model == null) throw new ArgumentNullException(nameof(model));
+
+        var root = tree.GetRoot();
+        var results = new List<EnumDefinitionInfo>();
+
+        foreach (var enumDecl in root.DescendantNodes().OfType<EnumDeclarationSyntax>())
+        {
+            var symbol = model.GetDeclaredSymbol(enumDecl);
+            if (symbol == null)
+                continue;
+
+            var location = enumDecl.GetLocation().GetLineSpan();
+
+            // Determine access modifier
+            var accessModifier = GetAccessModifier(enumDecl.Modifiers);
+
+            // Get underlying type
+            var underlyingType = symbol.EnumUnderlyingType?.ToDisplayString() ?? "int";
+
+            // Extract enum values
+            var enumValues = new List<EnumValueInfo>();
+            foreach (var member in enumDecl.Members)
+            {
+                var memberSymbol = model.GetDeclaredSymbol(member);
+                if (memberSymbol == null)
+                    continue;
+
+                var memberLocation = member.GetLocation().GetLineSpan();
+                var value = memberSymbol.ConstantValue; // Can be null if not explicitly set
+
+                var enumValue = new EnumValueInfo(
+                    valueName: memberSymbol.Name,
+                    value: value,
+                    lineNumber: memberLocation.StartLinePosition.Line + 1
+                );
+
+                enumValues.Add(enumValue);
+            }
+
+            var enumDef = new EnumDefinitionInfo(
+                enumName: symbol.Name,
+                namespaceName: symbol.ContainingNamespace?.ToDisplayString() ?? string.Empty,
+                fullyQualifiedName: GetFullyQualifiedName(symbol),
+                accessModifier: accessModifier,
+                underlyingType: underlyingType,
+                values: enumValues,
+                filePath: location.Path,
+                lineNumber: location.StartLinePosition.Line + 1
+            );
+
+            results.Add(enumDef);
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Extract interface definitions from the given syntax tree using the provided semantic model.
+    /// </summary>
+    /// <param name="tree">Syntax tree to scan</param>
+    /// <param name="model">Semantic model associated with the tree</param>
+    /// <returns>List of interface definition information</returns>
+    public List<InterfaceDefinitionInfo> ExtractInterfaceDefinitions(SyntaxTree tree, SemanticModel model)
+    {
+        if (tree == null) throw new ArgumentNullException(nameof(tree));
+        if (model == null) throw new ArgumentNullException(nameof(model));
+
+        var root = tree.GetRoot();
+        var results = new List<InterfaceDefinitionInfo>();
+
+        foreach (var interfaceDecl in root.DescendantNodes().OfType<InterfaceDeclarationSyntax>())
+        {
+            var symbol = model.GetDeclaredSymbol(interfaceDecl);
+            if (symbol == null)
+                continue;
+
+            var location = interfaceDecl.GetLocation().GetLineSpan();
+
+            // Determine access modifier
+            var accessModifier = GetAccessModifier(interfaceDecl.Modifiers);
+
+            // Get base interfaces
+            var baseInterfaces = new List<string>();
+            if (interfaceDecl.BaseList != null)
+            {
+                foreach (var baseType in interfaceDecl.BaseList.Types)
+                {
+                    var baseTypeSymbol = model.GetSymbolInfo(baseType.Type).Symbol as INamedTypeSymbol;
+                    if (baseTypeSymbol != null)
+                    {
+                        baseInterfaces.Add(GetFullyQualifiedName(baseTypeSymbol));
+                    }
+                }
+            }
+
+            // Count methods and properties
+            int methodCount = 0;
+            int propertyCount = 0;
+
+            foreach (var member in interfaceDecl.Members)
+            {
+                if (member is MethodDeclarationSyntax)
+                {
+                    methodCount++;
+                }
+                else if (member is PropertyDeclarationSyntax)
+                {
+                    propertyCount++;
+                }
+            }
+
+            var interfaceDef = new InterfaceDefinitionInfo(
+                interfaceName: symbol.Name,
+                namespaceName: symbol.ContainingNamespace?.ToDisplayString() ?? string.Empty,
+                fullyQualifiedName: GetFullyQualifiedName(symbol),
+                accessModifier: accessModifier,
+                baseInterfaces: baseInterfaces,
+                methodCount: methodCount,
+                propertyCount: propertyCount,
+                filePath: location.Path,
+                lineNumber: location.StartLinePosition.Line + 1
+            );
+
+            results.Add(interfaceDef);
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Extract struct definitions from the given syntax tree using the provided semantic model.
+    /// </summary>
+    /// <param name="tree">Syntax tree to scan</param>
+    /// <param name="model">Semantic model associated with the tree</param>
+    /// <returns>List of struct definition information</returns>
+    public List<StructDefinitionInfo> ExtractStructDefinitions(SyntaxTree tree, SemanticModel model)
+    {
+        if (tree == null) throw new ArgumentNullException(nameof(tree));
+        if (model == null) throw new ArgumentNullException(nameof(model));
+
+        var root = tree.GetRoot();
+        var results = new List<StructDefinitionInfo>();
+
+        foreach (var structDecl in root.DescendantNodes().OfType<StructDeclarationSyntax>())
+        {
+            var symbol = model.GetDeclaredSymbol(structDecl);
+            if (symbol == null)
+                continue;
+
+            var location = structDecl.GetLocation().GetLineSpan();
+
+            // Determine access modifier
+            var accessModifier = GetAccessModifier(structDecl.Modifiers);
+
+            // Check for readonly and ref modifiers
+            bool isReadOnly = structDecl.Modifiers.Any(m => m.IsKind(SyntaxKind.ReadOnlyKeyword));
+            bool isRef = structDecl.Modifiers.Any(m => m.IsKind(SyntaxKind.RefKeyword));
+
+            // Get implemented interfaces
+            var interfaces = new List<string>();
+            if (structDecl.BaseList != null)
+            {
+                foreach (var baseType in structDecl.BaseList.Types)
+                {
+                    var baseTypeSymbol = model.GetSymbolInfo(baseType.Type).Symbol as INamedTypeSymbol;
+                    if (baseTypeSymbol != null)
+                    {
+                        interfaces.Add(GetFullyQualifiedName(baseTypeSymbol));
+                    }
+                }
+            }
+
+            // Count methods, properties, and fields
+            int methodCount = 0;
+            int propertyCount = 0;
+            int fieldCount = 0;
+
+            foreach (var member in structDecl.Members)
+            {
+                if (member is MethodDeclarationSyntax)
+                {
+                    methodCount++;
+                }
+                else if (member is PropertyDeclarationSyntax)
+                {
+                    propertyCount++;
+                }
+                else if (member is FieldDeclarationSyntax)
+                {
+                    var fieldDecl = (FieldDeclarationSyntax)member;
+                    fieldCount += fieldDecl.Declaration?.Variables.Count ?? 0;
+                }
+            }
+
+            var structDef = new StructDefinitionInfo(
+                structName: symbol.Name,
+                namespaceName: symbol.ContainingNamespace?.ToDisplayString() ?? string.Empty,
+                fullyQualifiedName: GetFullyQualifiedName(symbol),
+                accessModifier: accessModifier,
+                isReadOnly: isReadOnly,
+                isRef: isRef,
+                interfaces: interfaces,
+                methodCount: methodCount,
+                propertyCount: propertyCount,
+                fieldCount: fieldCount,
+                filePath: location.Path,
+                lineNumber: location.StartLinePosition.Line + 1
+            );
+
+            results.Add(structDef);
         }
 
         return results;
@@ -874,6 +1381,194 @@ public class RoslynAnalyzer
             ["field_count"] = classDef.FieldCount,
             ["file_path"] = classDef.FilePath,
             ["line_number"] = classDef.LineNumber
+        };
+
+        await _vectorStore.AddTextAsync(content, metadata).ConfigureAwait(false);
+    }
+
+    private async Task StorePropertyDefinitionAsync(PropertyDefinitionInfo propertyDef)
+    {
+        if (_vectorStore == null)
+            return;
+
+        var accessors = "";
+        if (propertyDef.HasGetter && propertyDef.HasSetter)
+            accessors = "get and set";
+        else if (propertyDef.HasGetter)
+            accessors = "get";
+        else if (propertyDef.HasSetter)
+            accessors = "set";
+        else
+            accessors = "none";
+
+        var modifiers = new List<string>();
+        if (propertyDef.IsStatic) modifiers.Add("static");
+        if (propertyDef.IsVirtual) modifiers.Add("virtual");
+        if (propertyDef.IsAbstract) modifiers.Add("abstract");
+        if (propertyDef.IsOverride) modifiers.Add("override");
+        var modifiersStr = modifiers.Count > 0 ? string.Join(", ", modifiers) : "none";
+
+        var content = $"Property {propertyDef.PropertyName} in class {propertyDef.ClassName} defined in namespace {propertyDef.Namespace}. " +
+                     $"This is a {propertyDef.AccessModifier} property of type {propertyDef.PropertyType} with {accessors} accessor(s). " +
+                     $"Modifiers: {modifiersStr}. " +
+                     $"Defined in file {propertyDef.FilePath} at line {propertyDef.LineNumber}.";
+
+        var metadata = new Dictionary<string, object>
+        {
+            ["type"] = "property_definition",
+            ["property"] = propertyDef.FullyQualifiedName,
+            ["property_name"] = propertyDef.PropertyName,
+            ["class"] = propertyDef.ClassName,
+            ["namespace"] = propertyDef.Namespace,
+            ["property_type"] = propertyDef.PropertyType,
+            ["access_modifier"] = propertyDef.AccessModifier,
+            ["is_static"] = propertyDef.IsStatic,
+            ["is_virtual"] = propertyDef.IsVirtual,
+            ["is_abstract"] = propertyDef.IsAbstract,
+            ["is_override"] = propertyDef.IsOverride,
+            ["has_getter"] = propertyDef.HasGetter,
+            ["has_setter"] = propertyDef.HasSetter,
+            ["is_auto_property"] = propertyDef.IsAutoProperty,
+            ["file_path"] = propertyDef.FilePath,
+            ["line_number"] = propertyDef.LineNumber
+        };
+
+        await _vectorStore.AddTextAsync(content, metadata).ConfigureAwait(false);
+    }
+
+    private async Task StoreFieldDefinitionAsync(FieldDefinitionInfo fieldDef)
+    {
+        if (_vectorStore == null)
+            return;
+
+        var modifiers = new List<string>();
+        if (fieldDef.IsStatic) modifiers.Add("static");
+        if (fieldDef.IsReadOnly) modifiers.Add("readonly");
+        if (fieldDef.IsConst) modifiers.Add("const");
+        if (fieldDef.IsVolatile) modifiers.Add("volatile");
+        var modifiersStr = modifiers.Count > 0 ? string.Join(", ", modifiers) : "none";
+
+        var content = $"Field {fieldDef.FieldName} in class {fieldDef.ClassName} defined in namespace {fieldDef.Namespace}. " +
+                     $"This is a {fieldDef.AccessModifier} field of type {fieldDef.FieldType}. " +
+                     $"Modifiers: {modifiersStr}. " +
+                     $"Defined in file {fieldDef.FilePath} at line {fieldDef.LineNumber}.";
+
+        var metadata = new Dictionary<string, object>
+        {
+            ["type"] = "field_definition",
+            ["field"] = fieldDef.FullyQualifiedName,
+            ["field_name"] = fieldDef.FieldName,
+            ["class"] = fieldDef.ClassName,
+            ["namespace"] = fieldDef.Namespace,
+            ["field_type"] = fieldDef.FieldType,
+            ["access_modifier"] = fieldDef.AccessModifier,
+            ["is_static"] = fieldDef.IsStatic,
+            ["is_readonly"] = fieldDef.IsReadOnly,
+            ["is_const"] = fieldDef.IsConst,
+            ["is_volatile"] = fieldDef.IsVolatile,
+            ["file_path"] = fieldDef.FilePath,
+            ["line_number"] = fieldDef.LineNumber
+        };
+
+        await _vectorStore.AddTextAsync(content, metadata).ConfigureAwait(false);
+    }
+
+    private async Task StoreEnumDefinitionAsync(EnumDefinitionInfo enumDef)
+    {
+        if (_vectorStore == null)
+            return;
+
+        var valuesList = string.Join(", ", enumDef.Values.Select(v => v.ToString()));
+        var valueCount = enumDef.Values.Count;
+
+        var content = $"Enum {enumDef.EnumName} defined in namespace {enumDef.Namespace} with underlying type {enumDef.UnderlyingType}. " +
+                     $"Contains {valueCount} value(s): {valuesList}. " +
+                     $"Defined in file {enumDef.FilePath} at line {enumDef.LineNumber}.";
+
+        var metadata = new Dictionary<string, object>
+        {
+            ["type"] = "enum_definition",
+            ["enum"] = enumDef.FullyQualifiedName,
+            ["enum_name"] = enumDef.EnumName,
+            ["namespace"] = enumDef.Namespace,
+            ["access_modifier"] = enumDef.AccessModifier,
+            ["underlying_type"] = enumDef.UnderlyingType,
+            ["value_count"] = valueCount,
+            ["values"] = valuesList,
+            ["file_path"] = enumDef.FilePath,
+            ["line_number"] = enumDef.LineNumber
+        };
+
+        await _vectorStore.AddTextAsync(content, metadata).ConfigureAwait(false);
+    }
+
+    private async Task StoreInterfaceDefinitionAsync(InterfaceDefinitionInfo interfaceDef)
+    {
+        if (_vectorStore == null)
+            return;
+
+        var baseInterfacesList = interfaceDef.BaseInterfaces.Count > 0 
+            ? string.Join(", ", interfaceDef.BaseInterfaces) 
+            : "none";
+
+        var content = $"Interface {interfaceDef.InterfaceName} defined in namespace {interfaceDef.Namespace}. " +
+                     $"Access modifier: {interfaceDef.AccessModifier}. " +
+                     $"Base interfaces: {baseInterfacesList}. " +
+                     $"Contains {interfaceDef.MethodCount} method(s) and {interfaceDef.PropertyCount} property/properties. " +
+                     $"Defined in file {interfaceDef.FilePath} at line {interfaceDef.LineNumber}.";
+
+        var metadata = new Dictionary<string, object>
+        {
+            ["type"] = "interface_definition",
+            ["interface"] = interfaceDef.FullyQualifiedName,
+            ["interface_name"] = interfaceDef.InterfaceName,
+            ["namespace"] = interfaceDef.Namespace,
+            ["access_modifier"] = interfaceDef.AccessModifier,
+            ["base_interfaces"] = baseInterfacesList,
+            ["method_count"] = interfaceDef.MethodCount,
+            ["property_count"] = interfaceDef.PropertyCount,
+            ["file_path"] = interfaceDef.FilePath,
+            ["line_number"] = interfaceDef.LineNumber
+        };
+
+        await _vectorStore.AddTextAsync(content, metadata).ConfigureAwait(false);
+    }
+
+    private async Task StoreStructDefinitionAsync(StructDefinitionInfo structDef)
+    {
+        if (_vectorStore == null)
+            return;
+
+        var modifiers = "";
+        if (structDef.IsReadOnly) modifiers += "readonly ";
+        if (structDef.IsRef) modifiers += "ref ";
+
+        var interfacesList = structDef.Interfaces.Count > 0 
+            ? string.Join(", ", structDef.Interfaces) 
+            : "none";
+
+        var content = $"Struct {structDef.StructName} defined in namespace {structDef.Namespace}. " +
+                     $"Access modifier: {structDef.AccessModifier}. " +
+                     $"Modifiers: {(string.IsNullOrWhiteSpace(modifiers) ? "none" : modifiers.Trim())}. " +
+                     $"Implemented interfaces: {interfacesList}. " +
+                     $"Contains {structDef.MethodCount} method(s), {structDef.PropertyCount} property/properties, and {structDef.FieldCount} field(s). " +
+                     $"Defined in file {structDef.FilePath} at line {structDef.LineNumber}.";
+
+        var metadata = new Dictionary<string, object>
+        {
+            ["type"] = "struct_definition",
+            ["struct"] = structDef.FullyQualifiedName,
+            ["struct_name"] = structDef.StructName,
+            ["namespace"] = structDef.Namespace,
+            ["access_modifier"] = structDef.AccessModifier,
+            ["is_readonly"] = structDef.IsReadOnly,
+            ["is_ref"] = structDef.IsRef,
+            ["interfaces"] = interfacesList,
+            ["method_count"] = structDef.MethodCount,
+            ["property_count"] = structDef.PropertyCount,
+            ["field_count"] = structDef.FieldCount,
+            ["file_path"] = structDef.FilePath,
+            ["line_number"] = structDef.LineNumber
         };
 
         await _vectorStore.AddTextAsync(content, metadata).ConfigureAwait(false);

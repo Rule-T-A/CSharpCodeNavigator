@@ -498,7 +498,7 @@ class Program
             
             if (_verbosity >= VerbosityLevel.Terse)
             {
-                System.Console.WriteLine($"Analysis complete! Files: {result.FilesProcessed}, Methods: {result.MethodsAnalyzed}, Calls: {result.MethodCalls.Count}, Definitions: {result.MethodDefinitions.Count}, Classes: {result.ClassDefinitions.Count}");
+                System.Console.WriteLine($"Analysis complete! Files: {result.FilesProcessed}, Methods: {result.MethodsAnalyzed}, Calls: {result.MethodCalls.Count}, Definitions: {result.MethodDefinitions.Count}, Classes: {result.ClassDefinitions.Count}, Properties: {result.PropertyDefinitionCount}, Fields: {result.FieldDefinitionCount}, Enums: {result.EnumDefinitionCount}, Interfaces: {result.InterfaceDefinitionCount}, Structs: {result.StructDefinitionCount}");
             }
             
             if (_verbosity >= VerbosityLevel.Normal)
@@ -509,6 +509,11 @@ class Program
                 System.Console.WriteLine($"  Method calls found: {result.MethodCalls.Count}");
                 System.Console.WriteLine($"  Method definitions found: {result.MethodDefinitions.Count}");
                 System.Console.WriteLine($"  Class definitions found: {result.ClassDefinitions.Count}");
+                System.Console.WriteLine($"  Property definitions found: {result.PropertyDefinitionCount}");
+                System.Console.WriteLine($"  Field definitions found: {result.FieldDefinitionCount}");
+                System.Console.WriteLine($"  Enum definitions found: {result.EnumDefinitionCount}");
+                System.Console.WriteLine($"  Interface definitions found: {result.InterfaceDefinitionCount}");
+                System.Console.WriteLine($"  Struct definitions found: {result.StructDefinitionCount}");
                 
                 if (result.Errors.Count > 0)
                 {
@@ -669,6 +674,26 @@ class Program
                             else if (type == "class_definition" && metadata.ContainsKey("class"))
                             {
                                 System.Console.WriteLine($"   [Class] {metadata["class"]}");
+                            }
+                            else if (type == "property_definition" && metadata.ContainsKey("property"))
+                            {
+                                System.Console.WriteLine($"   [Property] {metadata["property"]}");
+                            }
+                            else if (type == "field_definition" && metadata.ContainsKey("field"))
+                            {
+                                System.Console.WriteLine($"   [Field] {metadata["field"]}");
+                            }
+                            else if (type == "enum_definition" && metadata.ContainsKey("enum"))
+                            {
+                                System.Console.WriteLine($"   [Enum] {metadata["enum"]}");
+                            }
+                            else if (type == "interface_definition" && metadata.ContainsKey("interface"))
+                            {
+                                System.Console.WriteLine($"   [Interface] {metadata["interface"]}");
+                            }
+                            else if (type == "struct_definition" && metadata.ContainsKey("struct"))
+                            {
+                                System.Console.WriteLine($"   [Struct] {metadata["struct"]}");
                             }
                             else
                             {
