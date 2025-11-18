@@ -18,6 +18,12 @@
   <ItemGroup>
     <ProjectReference Include="..\CodeAnalyzer.Roslyn\CodeAnalyzer.Roslyn.csproj" />
     <ProjectReference Include="..\CodeAnalyzer.Navigation\CodeAnalyzer.Navigation.csproj" />
+    <ProjectReference Include="..\..\tests\CodeAnalyzer.Roslyn.Tests\CodeAnalyzer.Roslyn.Tests.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="VectorStore" Version="1.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.9" />
   </ItemGroup>
 
 </Project>
