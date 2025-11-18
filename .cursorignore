@@ -1,0 +1,35 @@
+# Build outputs
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+
+# Test results
+TestResults/
+*.coverage
+*.coveragexml
+coverage*.json
+coverage*.xml
+
+# IDE files
+.vs/
+.idea/
+*.user
+*.suo
+*.sln.iml
+
+# NuGet packages
+*.nupkg
+
+# Vector store data
+vector-store/
+
+# Temporary files
+*.tmp
+*.log
+*.cache
+
+# OS files
+.DS_Store
+Thumbs.db
+
